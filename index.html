@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
-<meta content="default-src 'none'; style-src * 'unsafe-inline'; script-src * 'unsafe-inline'; img-src * data: blob:; font-src * data:; media-src * data: blob:; connect-src 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'" http-equiv="Content-Security-Policy"/>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-<title>考公任务速览 - 90天冲刺计划</title>
-<!-- Tailwind CSS -->
-<script src="https://image.uc.cn/s/uae/g/3n/mos-production/0915/3.4.17.js"></script>
-<script>
+    <meta content="default-src 'none'; style-src * 'unsafe-inline'; script-src * 'unsafe-inline'; img-src * data: blob:; font-src * data:; media-src * data: blob:; connect-src 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'" http-equiv="Content-Security-Policy"/>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>考公任务速览 - 90天冲刺计划</title>
+    <!-- Tailwind CSS -->
+    <script src="https://image.uc.cn/s/uae/g/3n/mos-production/0915/3.4.17.js">
+    </script>
+    <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -23,12 +23,14 @@
             }
         }
     </script>
-<!-- Font Awesome -->
-<script src="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/js/all.min.js"></script>
-<link href="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/css/fontawesome.min.css" rel="stylesheet"/>
-<!-- ECharts -->
-<script src="https://image.uc.cn/s/uae/g/3n/mos-production/cdn-staticfile-net/echarts/5.4.3/echarts.min.js"></script>
-<style>
+    <!-- Font Awesome -->
+    <script src="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/js/all.min.js">
+    </script>
+    <link href="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/css/fontawesome.min.css" rel="stylesheet"/>
+    <!-- ECharts -->
+    <script src="https://image.uc.cn/s/uae/g/3n/mos-production/cdn-staticfile-net/echarts/5.4.3/echarts.min.js">
+    </script>
+    <style>
         /* Custom Scrollbar hide */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
@@ -39,11 +41,11 @@
         }
 
         /* Checkbox styling */
-        .custom-checkbox:checked + div {
+        .custom-checkbox:checked+div {
             text-decoration: line-through;
             color: #9ca3af;
         }
-        
+
         /* Dark mode transitions */
         body {
             transition: background-color 0.3s, color 0.3s;
@@ -51,12 +53,22 @@
 
         /* Toast Animation */
         @keyframes slideInDown {
-            from { transform: translate(-50%, -100%); opacity: 0; }
-            to { transform: translate(-50%, 20px); opacity: 1; }
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 20px);
+                opacity: 1;
+            }
         }
         @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
         }
         .toast-enter {
             animation: slideInDown 0.3s forwards;
@@ -64,155 +76,259 @@
         .toast-exit {
             animation: fadeOut 0.3s forwards;
         }
+
+        /* Task action buttons */
+        .task-action-btn {
+            opacity: 0.4;
+            transition: opacity 0.2s, color 0.2s;
+        }
+        .task-item:hover .task-action-btn {
+            opacity: 1;
+        }
+
+        /* Add task button */
+        .add-task-btn {
+            transition: all 0.2s;
+        }
+        .add-task-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        .add-task-btn:hover i {
+            color: #3b82f6;
+        }
+
+        /* Modal overlay */
+        .modal-overlay {
+            backdrop-filter: blur(2px);
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-darkbg dark:text-gray-100 h-screen flex flex-col overflow-hidden font-sans">
-<!-- Toast Container -->
-<div class="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none" id="toast-container"></div>
-<!-- Header -->
-<header class="bg-white dark:bg-darkcard shadow-sm z-10 flex-none">
-<div class="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
-<h1 class="text-lg font-bold tracking-wide">考公速览</h1>
-<div class="flex items-center space-x-3">
-<button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" id="theme-toggle">
-<i class="fas fa-moon dark:hidden text-gray-600"></i>
-<i class="fas fa-sun hidden dark:inline text-yellow-400"></i>
-</button>
-<button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" id="settings-btn">
-<i class="fas fa-cog text-gray-600 dark:text-gray-300"></i>
-</button>
-</div>
-</div>
-</header>
-<!-- Main Content Area -->
-<main class="flex-1 overflow-y-auto no-scrollbar relative bg-gray-50 dark:bg-darkbg w-full max-w-md mx-auto">
-<!-- Countdown Section (Fixed at top of main) -->
-<section class="bg-white dark:bg-darkcard py-3 shadow-sm mb-2 flex-none" id="countdown-section">
-<div class="px-4">
-<div class="flex space-x-3 overflow-x-auto no-scrollbar pb-1" id="countdown-container">
-<!-- Countdown items injected by JS -->
-</div>
-</div>
-</section>
-<!-- View: Today -->
-<section class="view-section px-4 pb-20 hidden" id="view-today">
-<div class="flex justify-between items-end mb-4 mt-2">
-<div>
-<h2 class="text-2xl font-bold text-gray-900 dark:text-white" id="today-date-title">今日计划</h2>
-<p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="today-day-count">第 1 天</p>
-</div>
-<div class="text-right">
-<span class="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded dark:bg-blue-900 dark:text-blue-200" id="current-stage-badge">基础重塑</span>
-</div>
-</div>
-<!-- Daily Tip -->
-<div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-3 mb-4 rounded-r text-sm text-yellow-800 dark:text-yellow-200" id="daily-tip">
-<!-- Tip injected by JS -->
-</div>
-<!-- Task List -->
-<div class="space-y-4" id="today-task-list">
-<!-- Tasks injected by JS -->
-</div>
-<!-- Note Area -->
-<div class="mt-6">
-<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">今日备注</label>
-<textarea class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-darkcard focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm transition" id="daily-note" placeholder="记录错题数量、心得体会..." rows="3"></textarea>
-</div>
-</section>
-<!-- View: Calendar -->
-<section class="view-section px-4 pb-20 hidden" id="view-calendar">
-<div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 mt-4">
-<div class="flex justify-between items-center mb-4">
-<button class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" id="prev-month"><i class="fas fa-chevron-left"></i></button>
-<h2 class="text-lg font-bold" id="calendar-month-title">2026年 7月</h2>
-<button class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" id="next-month"><i class="fas fa-chevron-right"></i></button>
-</div>
-<!-- Weekdays -->
-<div class="grid grid-cols-7 text-center text-xs font-semibold text-gray-400 mb-2">
-<div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
-</div>
-<!-- Days Grid -->
-<div class="grid grid-cols-7 gap-y-2 gap-x-1 text-center text-sm" id="calendar-grid">
-<!-- Days injected by JS -->
-</div>
-</div>
-<!-- Selected Date Tasks -->
-<div class="mt-6 hidden" id="selected-date-tasks-container">
-<h3 class="text-lg font-bold mb-3 border-l-4 border-primary pl-3" id="selected-date-title">7月22日 任务</h3>
-<div class="space-y-3" id="selected-date-task-list">
-<!-- Tasks for selected date -->
-</div>
-</div>
-</section>
-<!-- View: Cockpit -->
-<section class="view-section px-4 pb-20 hidden" id="view-cockpit">
-<h2 class="text-xl font-bold mb-4 mt-4">学情驾驶舱</h2>
-<!-- Progress Card -->
-<div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 mb-4">
-<h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">总体进度</h3>
-<div class="flex items-center justify-between mb-2">
-<span class="text-3xl font-bold text-primary" id="progress-percentage">0%</span>
-<span class="text-xs text-gray-500 dark:text-gray-400" id="progress-days-text">0/90 天</span>
-</div>
-<div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-<div class="bg-primary h-2.5 rounded-full" id="progress-bar" style="width: 0%"></div>
-</div>
-</div>
-<!-- Chart Card -->
-<div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 mb-4">
-<h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">阶段分析</h3>
-<div id="echarts-stage" style="width: 100%; height: 200px;"></div>
-</div>
-<!-- Badges Card -->
-<div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4">
-<h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">成就徽章</h3>
-<div class="grid grid-cols-4 gap-4" id="badge-grid">
-<!-- Badges injected by JS -->
-</div>
-</div>
-</section>
-</main>
-<!-- Bottom Navigation -->
-<nav class="bg-white dark:bg-darkcard border-t border-gray-200 dark:border-gray-700 flex-none z-20">
-<div class="max-w-md mx-auto flex justify-around items-center h-16">
-<button class="nav-btn flex flex-col items-center justify-center w-full h-full text-primary" data-target="view-today">
-<i class="fas fa-calendar-check text-xl mb-1"></i>
-<span class="text-xs">今日</span>
-</button>
-<button class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" data-target="view-calendar">
-<i class="fas fa-calendar-alt text-xl mb-1"></i>
-<span class="text-xs">日历</span>
-</button>
-<button class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" data-target="view-cockpit">
-<i class="fas fa-chart-pie text-xl mb-1"></i>
-<span class="text-xs">驾驶舱</span>
-</button>
-</div>
-</nav>
-<!-- Settings Modal -->
-<div class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4" id="settings-modal">
-<div class="bg-white dark:bg-darkcard rounded-xl w-full max-w-sm shadow-2xl overflow-hidden transform transition-all">
-<div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-<h3 class="font-bold text-lg">设置与数据</h3>
-<button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" id="close-settings"><i class="fas fa-times"></i></button>
-</div>
-<div class="p-4 space-y-4">
-<div>
-<h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">数据管理</h4>
-<div class="flex space-x-2">
-<button class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition" id="export-btn">导出数据</button>
-<button class="flex-1 bg-green-50 text-green-600 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition" id="import-btn">导入数据</button>
-<input accept=".json" class="hidden" id="import-file" type="file"/>
-</div>
-</div>
-<div>
-<h4 class="text-sm font-semibold text-red-500 mb-2">危险区域</h4>
-<button class="w-full bg-red-50 text-red-600 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition" id="reset-btn">重置所有进度</button>
-</div>
-</div>
-</div>
-</div>
-<script>
+    <!-- Toast Container -->
+    <div class="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none" id="toast-container"></div>
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-darkcard shadow-sm z-10 flex-none">
+        <div class="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
+            <h1 class="text-lg font-bold tracking-wide">考公速览</h1>
+            <div class="flex items-center space-x-3">
+                <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" id="theme-toggle">
+                    <i class="fas fa-moon dark:hidden text-gray-600"></i>
+                    <i class="fas fa-sun hidden dark:inline text-yellow-400"></i>
+                </button>
+                <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" id="settings-btn">
+                    <i class="fas fa-cog text-gray-600 dark:text-gray-300"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto no-scrollbar relative bg-gray-50 dark:bg-darkbg w-full max-w-md mx-auto">
+        <!-- Countdown Section -->
+        <section class="bg-white dark:bg-darkcard py-3 shadow-sm mb-2 flex-none" id="countdown-section">
+            <div class="px-4">
+                <div class="flex space-x-3 overflow-x-auto no-scrollbar pb-1" id="countdown-container">
+                    <!-- Countdown items injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Today -->
+        <section class="view-section px-4 pb-20 hidden" id="view-today">
+            <div class="flex justify-between items-end mb-2 mt-2">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white" id="today-date-title">今日计划</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="today-day-count">第 1 天</p>
+                </div>
+                <div class="text-right flex items-center gap-2">
+                    <span class="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded dark:bg-blue-900 dark:text-blue-200" id="current-stage-badge">基础重塑</span>
+                    <!-- 导出按钮 -->
+                    <button id="export-today-btn" class="text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 px-3 py-1 rounded-full transition" title="导出今日计划">
+                        <i class="fas fa-file-export mr-1"></i>导出
+                    </button>
+                </div>
+            </div>
+            <!-- 今日进度条 -->
+            <div class="mb-3 flex items-center gap-2">
+                <span class="text-xs text-gray-500 dark:text-gray-400" id="today-progress-label">进度 0%</span>
+                <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div class="bg-primary h-2 rounded-full" id="today-progress-bar" style="width:0%"></div>
+                </div>
+            </div>
+            <!-- Daily Tip -->
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-3 mb-4 rounded-r text-sm text-yellow-800 dark:text-yellow-200" id="daily-tip">
+                <!-- Tip injected by JS -->
+            </div>
+            <!-- Task List -->
+            <div class="space-y-4" id="today-task-list">
+                <!-- Tasks injected by JS -->
+            </div>
+            <!-- Note Area -->
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">今日备注</label>
+                <textarea class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-darkcard focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm transition" id="daily-note" placeholder="记录错题数量、心得体会..." rows="3"></textarea>
+            </div>
+        </section>
+
+        <!-- View: Calendar -->
+        <section class="view-section px-4 pb-20 hidden" id="view-calendar">
+            <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 mt-4">
+                <div class="flex justify-between items-center mb-4">
+                    <button class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" id="prev-month"><i class="fas fa-chevron-left"></i></button>
+                    <h2 class="text-lg font-bold" id="calendar-month-title">2026年 7月</h2>
+                    <button class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" id="next-month"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <!-- Weekdays -->
+                <div class="grid grid-cols-7 text-center text-xs font-semibold text-gray-400 mb-2">
+                    <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+                </div>
+                <!-- Days Grid -->
+                <div class="grid grid-cols-7 gap-y-2 gap-x-1 text-center text-sm" id="calendar-grid">
+                    <!-- Days injected by JS -->
+                </div>
+            </div>
+            <!-- Selected Date Tasks -->
+            <div class="mt-6 hidden" id="selected-date-tasks-container">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-lg font-bold border-l-4 border-primary pl-3" id="selected-date-title">7月22日 任务</h3>
+                    <button class="text-xs text-primary hover:text-blue-700 font-medium flex items-center gap-1 add-task-btn-calendar px-2 py-1 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:border-primary transition">
+                        <i class="fas fa-plus text-xs"></i> 添加
+                    </button>
+                </div>
+                <div class="space-y-3" id="selected-date-task-list">
+                    <!-- Tasks for selected date -->
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Cockpit -->
+        <section class="view-section px-4 pb-20 hidden" id="view-cockpit">
+            <h2 class="text-xl font-bold mb-4 mt-4">学情驾驶舱</h2>
+            <!-- Progress Card -->
+            <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 mb-4">
+                <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">总体进度</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-3xl font-bold text-primary" id="progress-percentage">0%</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400" id="progress-days-text">0/90 天</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div class="bg-primary h-2.5 rounded-full" id="progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            <!-- Chart Card -->
+            <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 mb-4">
+                <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">阶段分析</h3>
+                <div id="echarts-stage" style="width: 100%; height: 200px;"></div>
+            </div>
+            <!-- Badges Card -->
+            <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4">
+                <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">成就徽章</h3>
+                <div class="grid grid-cols-4 gap-4" id="badge-grid">
+                    <!-- Badges injected by JS -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bg-white dark:bg-darkcard border-t border-gray-200 dark:border-gray-700 flex-none z-20">
+        <div class="max-w-md mx-auto flex justify-around items-center h-16">
+            <button class="nav-btn flex flex-col items-center justify-center w-full h-full text-primary" data-target="view-today">
+                <i class="fas fa-calendar-check text-xl mb-1"></i>
+                <span class="text-xs">今日</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" data-target="view-calendar">
+                <i class="fas fa-calendar-alt text-xl mb-1"></i>
+                <span class="text-xs">日历</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" data-target="view-cockpit">
+                <i class="fas fa-chart-pie text-xl mb-1"></i>
+                <span class="text-xs">驾驶舱</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Settings Modal -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 modal-overlay" id="settings-modal">
+        <div class="bg-white dark:bg-darkcard rounded-xl w-full max-w-sm shadow-2xl overflow-hidden transform transition-all">
+            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-lg">设置与数据</h3>
+                <button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" id="close-settings"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">数据管理</h4>
+                    <div class="flex space-x-2">
+                        <button class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition" id="export-btn">导出数据</button>
+                        <button class="flex-1 bg-green-50 text-green-600 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition" id="import-btn">导入数据</button>
+                        <input accept=".json" class="hidden" id="import-file" type="file"/>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-red-500 mb-2">危险区域</h4>
+                    <button class="w-full bg-red-50 text-red-600 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition" id="reset-btn">重置所有进度</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Add/Edit Modal -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 modal-overlay" id="task-modal">
+        <div class="bg-white dark:bg-darkcard rounded-xl w-full max-w-sm shadow-2xl overflow-hidden transform transition-all">
+            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-lg" id="task-modal-title">添加任务</h3>
+                <button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" id="close-task-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 space-y-4">
+                <input type="hidden" id="task-modal-date"/>
+                <input type="hidden" id="task-modal-index" value="-1"/>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">标签</label>
+                    <input class="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-darkcard focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm" id="task-modal-tag" placeholder="如：行测-资料分析" list="tag-suggestions"/>
+                    <datalist id="tag-suggestions">
+                        <!-- 预设常用标签 -->
+                        <option value="行测-资料分析">
+                        <option value="申论">
+                        <option value="常识时政">
+                        <option value="申论规范词积累">
+                        <option value="复盘">
+                        <option value="行测-言语理解">
+                        <option value="行测-判断推理">
+                        <option value="行测-数量关系">
+                    </datalist>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">任务内容</label>
+                    <textarea class="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-darkcard focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm" id="task-modal-content" rows="3" placeholder="具体任务描述..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">目标（可选）</label>
+                    <input class="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-darkcard focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm" id="task-modal-goal" placeholder="如：做对的题≥60%"/>
+                </div>
+                <div class="flex space-x-2 pt-2">
+                    <button class="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition" id="task-modal-cancel">取消</button>
+                    <button class="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition" id="task-modal-save">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Modal -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 modal-overlay" id="template-modal">
+        <div class="bg-white dark:bg-darkcard rounded-xl w-full max-w-sm shadow-2xl overflow-hidden transform transition-all">
+            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-lg">选择任务模板</h3>
+                <button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" id="close-template-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 space-y-2 max-h-80 overflow-y-auto" id="template-list">
+                <!-- 模板项由JS生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
         // --- Data & Constants ---
         const START_DATE = "2026-07-22";
         const EXAMS = [
@@ -234,76 +350,121 @@
             { id: "king", name: "上岸之王", condition: 90, icon: "fa-crown", color: "text-yellow-500" }
         ];
 
+        // 预设任务模板（可自定义）
+        const TEMPLATES = [
+            { tag: "行测-资料分析", content: "做一套资料分析真题（不限时），对答案并标记错题K/J/S。", goal: "正确率≥70%" },
+            { tag: "行测-资料分析", content: "复习资料分析公式，并做20道专项练习。", goal: "能默写全部公式" },
+            { tag: "申论", content: "做一道概括题（非江苏），先独立写，再对照视频解析。", goal: "能写出答案要点" },
+            { tag: "申论", content: "做一道分析题，按‘现象+原因+影响’结构作答。", goal: "结构完整" },
+            { tag: "常识时政", content: "观看马克时政最新视频20分钟，记录3个关键点。", goal: "能复述核心内容" },
+            { tag: "复盘", content: "整理错题本，记录今日错题（K/J/S）。", goal: "完成3条记录" },
+        ];
+
         // Initial 7 Days Data (From Product Design)
         const INITIAL_TASKS = {
             "2026-07-22": {
                 tip: "第一次做不对很正常，标清楚错因就行。今天做不完没关系，明天继续。",
                 tasks: [
-                    { tag: "行测-资料分析", content: "翻开讲义第一课「变化」，只看公式汇总，抄在纸上背熟。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。做完对答案，错题标K/J/S。", goal: "能默写四个公式，做对的题≥60%。" },
-                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道概括题（非江苏）。先独立写，再看视频对答案。写多写少不管，能写出来就算赢。", goal: "能写出答案，不看正确率。" },
-                    { tag: "常识时政", content: "看马克时政最新一期视频，看20分钟。看完截图3个你觉得最可能考的知识点，存相册。不抄笔记。", goal: "今天不追求记住，只追求'看过'。" },
-                    { tag: "申论规范词积累", content: "从小马哥视频的答案里，选1个比你的表达更规范的词，抄进'规范词本'。", goal: "" },
-                    { tag: "复盘", content: "建立行测错题本。不抄题，只记'日期+刷题册名称+章节+题号+K/J/S'。今天记3条试试。", goal: "" }
+                    { tag: "行测-资料分析", content: "翻开讲义第一课「变化」，只看公式汇总，抄在纸上背熟。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。做完对答案，错题标K/J/S。",
+                    goal: "能默写四个公式，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道概括题（非江苏）。先独立写，再看视频对答案。写多写少不管，能写出来就算赢。",
+                    goal: "能写出答案，不看正确率。" },
+                    { tag: "常识时政", content: "看马克时政最新一期视频，看20分钟。看完截图3个你觉得最可能考的知识点，存相册。不抄笔记。",
+                    goal: "今天不追求记住，只追求'看过'。" },
+                    { tag: "申论规范词积累", content: "从小马哥视频的答案里，选1个比你的表达更规范的词，抄进'规范词本'。",
+                    goal: "" },
+                    { tag: "复盘", content: "建立行测错题本。不抄题，只记'日期+刷题册名称+章节+题号+K/J/S'。今天记3条试试。",
+                    goal: "" }
                 ]
             },
             "2026-07-23": {
                 tip: "选项差距大（10/20/30/40）就估；差距小（10.1/10.2/10.3）就硬算。别纠结，看选项差距决定。",
                 tasks: [
-                    { tag: "行测-资料分析", content: "翻开讲义第二课「加减与误差」，只看结论。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "能区分什么时候估什么时候精算，做对的题≥60%。" },
-                    { tag: "申论", content: "打开B站小马哥刷题合集，做第二道概括题（非江苏）。先独立写，再看视频对答案。今天重点关注：你写的词哪些是从材料里抄的，哪些是自己编的？", goal: "能区分'原词'和'自编词'。" },
-                    { tag: "常识时政", content: "继续看马克时政，20分钟。翻看昨天截图的知识点，能说出大概意思就行。", goal: "能复述昨天3个知识点的核心词。" },
-                    { tag: "申论规范词积累", content: "从今天的答案里选1个新规范词抄进本子。", goal: "" },
-                    { tag: "复盘", content: "重做Day1行测错题（只看标了K/J/S的题）。", goal: "" }
+                    { tag: "行测-资料分析", content: "翻开讲义第二课「加减与误差」，只看结论。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。",
+                    goal: "能区分什么时候估什么时候精算，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做第二道概括题（非江苏）。先独立写，再看视频对答案。今天重点关注：你写的词哪些是从材料里抄的，哪些是自己编的？",
+                    goal: "能区分'原词'和'自编词'。" },
+                    { tag: "常识时政", content: "继续看马克时政，20分钟。翻看昨天截图的知识点，能说出大概意思就行。",
+                    goal: "能复述昨天3个知识点的核心词。" },
+                    { tag: "申论规范词积累", content: "从今天的答案里选1个新规范词抄进本子。",
+                    goal: "" },
+                    { tag: "复盘", content: "重做Day1行测错题（只看标了K/J/S的题）。",
+                    goal: "" }
                 ]
             },
             "2026-07-24": {
                 tip: "增长量带单位（亿元/万吨），增长率带%。题干问'增长了多少'看单位判断。",
                 tasks: [
-                    { tag: "行测-资料分析", content: "翻开讲义第三课「乘除变化」，只看公式。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "能分清增长量和增长率，做对的题≥60%。" },
-                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道分析题（非江苏）。按'现象+原因+影响'三层写。再看视频对答案。", goal: "能写出至少2层。" },
-                    { tag: "常识时政", content: "看马克时政，20分钟。截图3个新知识点。", goal: "" },
-                    { tag: "申论规范词积累", content: "从今天分析题答案里选1个规范词抄进本子。", goal: "" },
-                    { tag: "复盘", content: "整理Day1-2申论答题要点，抄在本子上。", goal: "" }
+                    { tag: "行测-资料分析", content: "翻开讲义第三课「乘除变化」，只看公式。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。",
+                    goal: "能分清增长量和增长率，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道分析题（非江苏）。按'现象+原因+影响'三层写。再看视频对答案。",
+                    goal: "能写出至少2层。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。截图3个新知识点。",
+                    goal: "" },
+                    { tag: "申论规范词积累", content: "从今天分析题答案里选1个规范词抄进本子。",
+                    goal: "" },
+                    { tag: "复盘", content: "整理Day1-2申论答题要点，抄在本子上。",
+                    goal: "" }
                 ]
             },
             "2026-07-25": {
                 tip: "比重变化看'部分增长率 vs 整体增长率'，a>b则比重上升，反之下降，不用算具体数值。",
                 tasks: [
-                    { tag: "行测-资料分析", content: "翻开讲义第四课「比重类问题」，只看三个公式。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "能默写三个比重公式，做对的题≥60%。" },
-                    { tag: "申论", content: "打开B站小马哥刷题合集，做第二道分析题（非江苏）。重点关注：你的'原因层'有没有用到材料里的原词？", goal: "原因分析有材料依据。" },
-                    { tag: "常识时政", content: "看马克时政，20分钟。翻看前两天截图，能说出3个以上知识点的大概意思。", goal: "" },
-                    { tag: "申论规范词积累", content: "从今天答案里选1个规范词。", goal: "" },
-                    { tag: "复盘", content: "统计Day1-4的K/J/S数量，记在错题本扉页。", goal: "" }
+                    { tag: "行测-资料分析", content: "翻开讲义第四课「比重类问题」，只看三个公式。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。",
+                    goal: "能默写三个比重公式，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做第二道分析题（非江苏）。重点关注：你的'原因层'有没有用到材料里的原词？",
+                    goal: "原因分析有材料依据。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。翻看前两天截图，能说出3个以上知识点的大概意思。",
+                    goal: "" },
+                    { tag: "申论规范词积累", content: "从今天答案里选1个规范词。",
+                    goal: "" },
+                    { tag: "复盘", content: "统计Day1-4的K/J/S数量，记在错题本扉页。",
+                    goal: "" }
                 ]
             },
             "2026-07-26": {
                 tip: "问'平均每…增长%'直接用 r=(a-b)/(1+b)，别绕弯硬算。",
                 tasks: [
-                    { tag: "行测-资料分析", content: "翻开讲义第五课「分式混合」，只看平均数公式。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "能做对平均数题，做对的题≥60%。" },
-                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道对策题（非江苏）。把所有'问题'圈出来，反推对策。写完后看视频对答案。", goal: "能写出至少3条对策。" },
-                    { tag: "常识时政", content: "看马克时政，20分钟。", goal: "" },
-                    { tag: "申论规范词积累", content: "从今天对策题答案里选1个规范词。", goal: "" },
-                    { tag: "复盘", content: "翻看前4天申论答案，漏掉的要点用荧光笔在材料上标出来。", goal: "" }
+                    { tag: "行测-资料分析", content: "翻开讲义第五课「分式混合」，只看平均数公式。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。",
+                    goal: "能做对平均数题，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道对策题（非江苏）。把所有'问题'圈出来，反推对策。写完后看视频对答案。",
+                    goal: "能写出至少3条对策。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。",
+                    goal: "" },
+                    { tag: "申论规范词积累", content: "从今天对策题答案里选1个规范词。",
+                    goal: "" },
+                    { tag: "复盘", content: "翻看前4天申论答案，漏掉的要点用荧光笔在材料上标出来。",
+                    goal: "" }
                 ]
             },
             "2026-07-27": {
                 tip: "容斥考得不多，公式记住就行，不用花太多时间。",
                 tasks: [
-                    { tag: "行测-资料分析", content: "翻开讲义第六课「容斥问题」，只看核心结论。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "做对的题≥60%。" },
-                    { tag: "申论", content: "打开B站小马哥刷题合集，做第二道对策题（非江苏）。重点关注：你写的对策和答案里的对策差距在哪？", goal: "能写出比昨天更具体的对策。" },
-                    { tag: "常识时政", content: "看马克时政，20分钟。", goal: "" },
-                    { tag: "申论规范词积累", content: "从今天答案里选1个规范词。", goal: "" },
-                    { tag: "复盘", content: "遮住答案，重做Day2-5所有标K的行测错题。", goal: "" }
+                    { tag: "行测-资料分析", content: "翻开讲义第六课「容斥问题」，只看核心结论。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。",
+                    goal: "做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做第二道对策题（非江苏）。重点关注：你写的对策和答案里的对策差距在哪？",
+                    goal: "能写出比昨天更具体的对策。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。",
+                    goal: "" },
+                    { tag: "申论规范词积累", content: "从今天答案里选1个规范词。",
+                    goal: "" },
+                    { tag: "复盘", content: "遮住答案，重做Day2-5所有标K的行测错题。",
+                    goal: "" }
                 ]
             },
             "2026-07-28": {
                 tip: "第一次做整篇资料分析，觉得时间长很正常。前7天就是在'热脑子'。",
                 tasks: [
-                    { tag: "行测-资料分析", content: "打开小P《精选90套刷题册》资料分析部分，做第1套完整资料分析，不限时。对答案+错题标K/J/S。", goal: "不限时正确率≥70%。" },
-                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道公文题（非江苏）。先画格式框架，再写内容。写完看视频对答案，重点检查格式。", goal: "格式5要素全部正确。" },
-                    { tag: "常识时政", content: "看马克时政，20分钟。", goal: "" },
-                    { tag: "申论规范词积累", content: "从今天公文题答案里选1个规范词。", goal: "" },
-                    { tag: "复盘", content: "分析资料错题是公式错还是计算错，标清楚。", goal: "" }
+                    { tag: "行测-资料分析", content: "打开小P《精选90套刷题册》资料分析部分，做第1套完整资料分析，不限时。对答案+错题标K/J/S。",
+                    goal: "不限时正确率≥70%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道公文题（非江苏）。先画格式框架，再写内容。写完看视频对答案，重点检查格式。",
+                    goal: "格式5要素全部正确。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。",
+                    goal: "" },
+                    { tag: "申论规范词积累", content: "从今天公文题答案里选1个规范词。",
+                    goal: "" },
+                    { tag: "复盘", content: "分析资料错题是公式错还是计算错，标清楚。",
+                    goal: "" }
                 ]
             }
         };
@@ -341,12 +502,12 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             const bgClass = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-gray-800');
-            
+
             toast.className = `${bgClass} text-white px-6 py-3 rounded-full shadow-lg text-sm font-medium toast-enter pointer-events-auto`;
             toast.innerText = message;
-            
+
             container.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.classList.remove('toast-enter');
                 toast.classList.add('toast-exit');
@@ -363,16 +524,16 @@
             renderCountdowns();
             switchView('view-today');
             renderToday();
-            
+
             // Listeners
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.addEventListener('click', () => switchView(btn.dataset.target));
             });
-            
+
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
             document.getElementById('settings-btn').addEventListener('click', () => document.getElementById('settings-modal').classList.remove('hidden'));
             document.getElementById('close-settings').addEventListener('click', () => document.getElementById('settings-modal').classList.add('hidden'));
-            
+
             // Calendar listeners
             document.getElementById('prev-month').addEventListener('click', () => changeMonth(-1));
             document.getElementById('next-month').addEventListener('click', () => changeMonth(1));
@@ -390,20 +551,61 @@
                 appState.tasks[today].note = e.target.value;
                 saveData();
             });
+
+            // Task Modal listeners
+            document.getElementById('close-task-modal').addEventListener('click', closeTaskModal);
+            document.getElementById('task-modal-cancel').addEventListener('click', closeTaskModal);
+            document.getElementById('task-modal-save').addEventListener('click', saveTaskFromModal);
+            document.getElementById('task-modal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeTaskModal();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeTaskModal();
+            });
+
+            // Template Modal
+            document.getElementById('close-template-modal').addEventListener('click', closeTemplateModal);
+            document.getElementById('template-modal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeTemplateModal();
+            });
+
+            // 导出今日计划
+            document.getElementById('export-today-btn').addEventListener('click', exportTodayPlan);
+
+            // 添加模板按钮（在今日视图的"添加任务"按钮旁）
+            // 动态添加，因为渲染时生成
         }
 
         function loadData() {
             const saved = localStorage.getItem('gongkao_app_v1');
             if (saved) {
-                appState = JSON.parse(saved);
+                try {
+                    appState = JSON.parse(saved);
+                    for (const date in appState.tasks) {
+                        if (appState.tasks[date].tasks) {
+                            appState.tasks[date].tasks.forEach(t => {
+                                if (t.done === undefined) t.done = false;
+                            });
+                        }
+                    }
+                } catch (e) {
+                    initDefaultData();
+                }
             } else {
-                // Initialize with first day
-                const firstDay = START_DATE;
-                appState.tasks[firstDay] = JSON.parse(JSON.stringify(INITIAL_TASKS[firstDay]));
-                appState.tasks[firstDay].note = "";
-                appState.tasks[firstDay].tasks.forEach(t => t.done = false);
-                appState.lastVisitDate = firstDay;
+                initDefaultData();
             }
+        }
+
+        function initDefaultData() {
+            const firstDay = START_DATE;
+            appState.tasks = {};
+            appState.tasks[firstDay] = JSON.parse(JSON.stringify(INITIAL_TASKS[firstDay]));
+            appState.tasks[firstDay].note = "";
+            appState.tasks[firstDay].tasks.forEach(t => t.done = false);
+            appState.lastVisitDate = firstDay;
+            appState.completedDays = [];
+            appState.theme = 'light';
+            saveData();
         }
 
         function saveData() {
@@ -413,18 +615,15 @@
         function checkRollover() {
             const today = getDateString(new Date());
             if (appState.lastVisitDate && appState.lastVisitDate !== today) {
-                // Logic: If today has no tasks, check yesterday. If yesterday has unfinished tasks, copy them.
                 if (!appState.tasks[today] || appState.tasks[today].tasks.length === 0) {
                     const yesterday = addDays(today, -1);
                     if (appState.tasks[yesterday] && appState.tasks[yesterday].tasks) {
                         const unfinishedTasks = appState.tasks[yesterday].tasks.filter(t => !t.done);
                         if (unfinishedTasks.length > 0) {
                             if (!appState.tasks[today]) appState.tasks[today] = { tasks: [], note: "" };
-                            // Merge: Append unfinished tasks to today (if today is empty or generic)
-                            // Strategy: If today is empty, just copy unfinished. If today has preset content (from INITIAL), maybe don't overwrite?
-                            // Simplified: If today is empty, copy unfinished.
                             if (appState.tasks[today].tasks.length === 0) {
                                 appState.tasks[today].tasks = JSON.parse(JSON.stringify(unfinishedTasks));
+                                appState.tasks[today].tasks.forEach(t => t.done = false);
                                 showToast(`已将 ${unfinishedTasks.length} 项未完成任务累积至今日`, 'info');
                             }
                         }
@@ -452,7 +651,7 @@
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             document.getElementById(viewId).classList.remove('hidden');
-            
+
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 if (btn.dataset.target === viewId) {
                     btn.classList.add('text-primary');
@@ -471,11 +670,11 @@
         function renderToday() {
             const todayStr = getDateString(new Date());
             const dayNum = diffDays(START_DATE, todayStr) + 1;
-            
+
             // Title
             document.getElementById('today-date-title').innerText = "今日计划";
             document.getElementById('today-day-count').innerText = `第 ${dayNum} 天`;
-            
+
             // Stage
             let currentStage = STAGES[0];
             for (let s of STAGES) {
@@ -488,8 +687,7 @@
 
             // Data
             let dayData = appState.tasks[todayStr];
-            
-            // If no data for today, check if we have preset data in INITIAL_TASKS
+
             if (!dayData) {
                 if (INITIAL_TASKS[todayStr]) {
                     dayData = JSON.parse(JSON.stringify(INITIAL_TASKS[todayStr]));
@@ -508,13 +706,48 @@
             // Note
             document.getElementById('daily-note').value = dayData.note || "";
 
+            // 更新今日进度条
+            const total = dayData.tasks.length;
+            const done = dayData.tasks.filter(t => t.done).length;
+            const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+            document.getElementById('today-progress-label').innerText = `进度 ${percent}%`;
+            document.getElementById('today-progress-bar').style.width = `${percent}%`;
+
             // Tasks
             const listContainer = document.getElementById('today-task-list');
             listContainer.innerHTML = '';
 
+            // --- 添加任务按钮 + 模板按钮 ---
+            const btnWrapper = document.createElement('div');
+            btnWrapper.className = "flex items-center gap-2 mb-3";
+
+            const addBtn = document.createElement('button');
+            addBtn.className = "add-task-btn flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg py-3 text-center cursor-pointer transition hover:border-primary hover:text-primary";
+            addBtn.innerHTML = `<i class="fas fa-plus text-gray-400 mr-2 transition"></i><span class="text-gray-500 dark:text-gray-400 text-sm">添加任务</span>`;
+            addBtn.addEventListener('click', () => openTaskModal(todayStr));
+            btnWrapper.appendChild(addBtn);
+
+            const templateBtn = document.createElement('button');
+            templateBtn.className = "add-task-btn border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg py-3 px-4 cursor-pointer transition hover:border-primary hover:text-primary flex items-center gap-1";
+            templateBtn.innerHTML = `<i class="fas fa-copy text-gray-400 transition"></i><span class="text-gray-500 dark:text-gray-400 text-sm hidden sm:inline">模板</span>`;
+            templateBtn.title = "从模板添加任务";
+            templateBtn.addEventListener('click', () => openTemplateModal(todayStr));
+            btnWrapper.appendChild(templateBtn);
+
+            listContainer.appendChild(btnWrapper);
+
+            if (!dayData.tasks || dayData.tasks.length === 0) {
+                const emptyHint = document.createElement('div');
+                emptyHint.className = "text-center text-gray-400 dark:text-gray-500 text-sm py-6";
+                emptyHint.innerText = "还没有任务，点击上方「添加任务」开始规划吧 ✨";
+                listContainer.appendChild(emptyHint);
+                return;
+            }
+
             // Group by tag
             const grouped = {};
-            dayData.tasks.forEach(task => {
+            dayData.tasks.forEach((task, idx) => {
+                task._index = idx;
                 if (!grouped[task.tag]) grouped[task.tag] = [];
                 grouped[task.tag].push(task);
             });
@@ -522,27 +755,25 @@
             for (const [tag, tasks] of Object.entries(grouped)) {
                 const tagDiv = document.createElement('div');
                 tagDiv.className = "bg-white dark:bg-darkcard rounded-lg shadow-sm p-4 border-l-4 border-primary";
-                
+
                 const tagTitle = document.createElement('h3');
                 tagTitle.className = "font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center";
                 tagTitle.innerHTML = `<span class="w-2 h-2 rounded-full bg-primary mr-2"></span>${tag}`;
                 tagDiv.appendChild(tagTitle);
 
-                tasks.forEach((task, index) => {
-                    // Find original index to update correctly
-                    const originalIndex = dayData.tasks.indexOf(task);
-                    
+                tasks.forEach((task) => {
+                    const idx = task._index;
                     const taskItem = document.createElement('div');
-                    taskItem.className = "mb-4 last:mb-0";
-                    
+                    taskItem.className = "mb-4 last:mb-0 task-item group";
+
                     const checkWrapper = document.createElement('label');
                     checkWrapper.className = "flex items-start space-x-3 cursor-pointer group";
-                    
+
                     const checkbox = document.createElement('input');
                     checkbox.type = "checkbox";
-                    checkbox.className = "custom-checkbox mt-1 w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary cursor-pointer";
+                    checkbox.className = "custom-checkbox mt-1 w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary cursor-pointer flex-shrink-0";
                     checkbox.checked = task.done;
-                    checkbox.onchange = (e) => toggleTask(todayStr, originalIndex, e.target.checked);
+                    checkbox.onchange = (e) => toggleTask(todayStr, idx, e.target.checked);
 
                     const contentDiv = document.createElement('div');
                     contentDiv.className = "flex-1 transition-colors duration-200";
@@ -564,35 +795,40 @@
                     checkWrapper.appendChild(checkbox);
                     checkWrapper.appendChild(contentDiv);
                     taskItem.appendChild(checkWrapper);
+
+                    // 操作按钮
+                    const actionBar = document.createElement('div');
+                    actionBar.className = "flex justify-end space-x-3 mt-1";
+
+                    const editBtn = document.createElement('button');
+                    editBtn.className = "task-action-btn text-gray-400 hover:text-blue-500 text-xs transition";
+                    editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
+                    editBtn.title = "编辑任务";
+                    editBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        openTaskModal(todayStr, idx);
+                    };
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = "task-action-btn text-gray-400 hover:text-red-500 text-xs transition";
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
+                    deleteBtn.title = "删除任务";
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (confirm(`确定要删除此任务吗？\n"${task.content.substring(0, 30)}${task.content.length > 30 ? '...' : ''}"`)) {
+                            deleteTask(todayStr, idx);
+                        }
+                    };
+
+                    actionBar.appendChild(editBtn);
+                    actionBar.appendChild(deleteBtn);
+                    taskItem.appendChild(actionBar);
+
                     tagDiv.appendChild(taskItem);
                 });
 
                 listContainer.appendChild(tagDiv);
             }
-        }
-
-        function toggleTask(dateStr, index, isChecked) {
-            if (appState.tasks[dateStr] && appState.tasks[dateStr].tasks[index]) {
-                appState.tasks[dateStr].tasks[index].done = isChecked;
-                saveData();
-                renderToday(); // Re-render to update styles and progress logic if needed
-                
-                // Update completed days list
-                updateCompletedDays();
-            }
-        }
-
-        function updateCompletedDays() {
-            // Recalculate completed days based on all tasks in history
-            const completed = [];
-            for (const date in appState.tasks) {
-                const tasks = appState.tasks[date].tasks;
-                if (tasks && tasks.length > 0 && tasks.every(t => t.done)) {
-                    completed.push(date);
-                }
-            }
-            appState.completedDays = completed;
-            saveData();
         }
 
         // --- Rendering: Countdown ---
@@ -603,61 +839,78 @@
 
             EXAMS.forEach(exam => {
                 const examDate = new Date(exam.date);
-                const diff = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
-                
+                const diff = Math.ceil((examDate - today) / (1000 * 3600 * 24));
+
                 const div = document.createElement('div');
                 div.className = "flex-none bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-3 min-w-[100px] shadow-md";
                 div.innerHTML = `
-                    <div class="text-xs opacity-80 mb-1 truncate">${exam.name}</div>
-                    <div class="text-xl font-bold">${diff} <span class="text-xs font-normal">天</span></div>
-                    <div class="text-[10px] opacity-70 mt-1">${exam.date.slice(5)}</div>
-                `;
+                        <div class="text-xs opacity-80 mb-1 truncate">${exam.name}</div>
+                        <div class="text-xl font-bold">${diff} <span class="text-xs font-normal">天</span></div>
+                        <div class="text-[10px] opacity-70 mt-1">${exam.date.slice(5)}</div>
+                    `;
                 container.appendChild(div);
             });
         }
 
         // --- Rendering: Calendar ---
         let currentCalendarDate = new Date();
+        let selectedCalendarDate = getDateString(new Date());
 
         function renderCalendar() {
             const year = currentCalendarDate.getFullYear();
             const month = currentCalendarDate.getMonth();
-            
+
             document.getElementById('calendar-month-title').innerText = `${year}年 ${month + 1}月`;
-            
+
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            
-            const startDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday start
+
+            const startDayOfWeek = (firstDay.getDay() + 6) % 7;
             const totalDays = lastDay.getDate();
-            
+
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
-            
-            // Empty cells
+
             for (let i = 0; i < startDayOfWeek; i++) {
                 grid.appendChild(document.createElement('div'));
             }
-            
+
             const todayStr = getDateString(new Date());
-            
-            // Days
+
             for (let d = 1; d <= totalDays; d++) {
                 const dateStr = getDateString(new Date(year, month, d));
                 const dayEl = document.createElement('div');
-                dayEl.className = "h-8 w-8 flex items-center justify-center rounded-full text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 mx-auto transition relative";
-                
+                dayEl.className =
+                    "h-8 w-8 flex items-center justify-center rounded-full text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 mx-auto transition relative";
+
                 if (dateStr === todayStr) {
                     dayEl.classList.add('bg-primary', 'text-white', 'hover:bg-primary');
-                } else if (appState.tasks[dateStr] && appState.tasks[dateStr].tasks.every(t => t.done)) {
+                } else if (appState.tasks[dateStr] && appState.tasks[dateStr].tasks && appState.tasks[dateStr].tasks.length > 0 &&
+                    appState.tasks[dateStr].tasks.every(t => t.done)) {
                     dayEl.classList.add('text-green-600', 'font-bold');
-                } else if (appState.tasks[dateStr]) {
+                } else if (appState.tasks[dateStr] && appState.tasks[dateStr].tasks && appState.tasks[dateStr].tasks.length > 0) {
                     dayEl.classList.add('text-blue-600', 'font-semibold');
                 }
-                
+
                 dayEl.innerText = d;
                 dayEl.onclick = () => showDateTasks(dateStr, dayEl);
                 grid.appendChild(dayEl);
+            }
+
+            if (selectedCalendarDate) {
+                const targetDate = new Date(selectedCalendarDate);
+                if (targetDate.getMonth() === month && targetDate.getFullYear() === year) {
+                    const dayNum = targetDate.getDate();
+                    const idx = startDayOfWeek + dayNum - 1;
+                    const allDays = grid.querySelectorAll('div');
+                    if (allDays[idx]) {
+                        allDays[idx].classList.add('ring-2', 'ring-offset-1', 'ring-primary');
+                    }
+                }
+                showDateTasks(selectedCalendarDate);
+            } else {
+                selectedCalendarDate = todayStr;
+                showDateTasks(todayStr);
             }
         }
 
@@ -667,58 +920,97 @@
         }
 
         function showDateTasks(dateStr, el) {
-            // Highlight selection
-            document.querySelectorAll('#calendar-grid > div').forEach(d => d.classList.remove('ring-2', 'ring-offset-1', 'ring-primary'));
-            if(el) el.classList.add('ring-2', 'ring-offset-1', 'ring-primary');
+            selectedCalendarDate = dateStr;
+
+            document.querySelectorAll('#calendar-grid > div').forEach(d => d.classList.remove('ring-2', 'ring-offset-1',
+            'ring-primary'));
+            if (el) el.classList.add('ring-2', 'ring-offset-1', 'ring-primary');
 
             const container = document.getElementById('selected-date-tasks-container');
             const title = document.getElementById('selected-date-title');
             const list = document.getElementById('selected-date-task-list');
-            
+
             container.classList.remove('hidden');
             const [y, m, d] = dateStr.split('-');
             title.innerText = `${parseInt(m)}月${parseInt(d)}日 任务`;
-            
+
             list.innerHTML = '';
-            
+
+            if (!appState.tasks[dateStr]) {
+                appState.tasks[dateStr] = { tasks: [], note: "" };
+                saveData();
+            }
+
             const data = appState.tasks[dateStr];
-            if (!data || !data.tasks || data.tasks.length === 0) {
-                list.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">本日无任务或未开始</div>';
+
+            if (!data.tasks || data.tasks.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 text-sm py-4">本日无任务，点击「添加」按钮创建 ✨</div>';
                 return;
             }
 
-            // Simple list for calendar view (read-only mostly, but allow toggle)
             data.tasks.forEach((task, idx) => {
                 const item = document.createElement('div');
-                item.className = "bg-white dark:bg-darkcard p-3 rounded shadow-sm border border-gray-100 dark:border-gray-700";
-                
+                item.className = "bg-white dark:bg-darkcard p-3 rounded shadow-sm border border-gray-100 dark:border-gray-700 task-item group";
+
                 const header = document.createElement('div');
                 header.className = "flex justify-between items-start mb-1";
-                
+
                 const tagSpan = document.createElement('span');
                 tagSpan.className = "text-xs font-bold text-primary bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded";
                 tagSpan.innerText = task.tag;
-                
+
                 const check = document.createElement('input');
                 check.type = "checkbox";
                 check.checked = task.done;
-                check.className = "w-4 h-4 text-primary rounded cursor-pointer";
+                check.className = "w-4 h-4 text-primary rounded cursor-pointer flex-shrink-0";
                 check.onchange = (e) => {
                     toggleTask(dateStr, idx, e.target.checked);
-                    renderCalendar(); // Refresh calendar indicators
+                    renderCalendar();
                 };
 
                 header.appendChild(tagSpan);
                 header.appendChild(check);
-                
+
                 const content = document.createElement('p');
                 content.className = "text-sm text-gray-700 dark:text-gray-300 " + (task.done ? "line-through text-gray-400" : "");
                 content.innerText = task.content;
-                
+
                 item.appendChild(header);
                 item.appendChild(content);
+
+                const actionBar = document.createElement('div');
+                actionBar.className = "flex justify-end space-x-3 mt-2 pt-1 border-t border-gray-100 dark:border-gray-700";
+
+                const editBtn = document.createElement('button');
+                editBtn.className = "task-action-btn text-gray-400 hover:text-blue-500 text-xs transition";
+                editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openTaskModal(dateStr, idx);
+                };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "task-action-btn text-gray-400 hover:text-red-500 text-xs transition";
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm(`确定要删除此任务吗？\n"${task.content.substring(0, 30)}${task.content.length > 30 ? '...' : ''}"`)) {
+                        deleteTask(dateStr, idx);
+                    }
+                };
+
+                actionBar.appendChild(editBtn);
+                actionBar.appendChild(deleteBtn);
+                item.appendChild(actionBar);
+
                 list.appendChild(item);
             });
+
+            // 绑定日历视图的添加按钮
+            const addBtn = container.querySelector('.add-task-btn-calendar');
+            if (addBtn) {
+                addBtn.onclick = () => openTaskModal(dateStr);
+            }
         }
 
         // --- Rendering: Cockpit ---
@@ -729,31 +1021,25 @@
             const totalDays = 90;
             const completedCount = appState.completedDays.length;
             const percent = Math.round((completedCount / totalDays) * 100);
-            
+
             document.getElementById('progress-percentage').innerText = `${percent}%`;
             document.getElementById('progress-days-text').innerText = `${completedCount}/${totalDays} 天`;
             document.getElementById('progress-bar').style.width = `${percent}%`;
 
-            // ECharts
             const chartDom = document.getElementById('echarts-stage');
             if (stageChart) stageChart.dispose();
             stageChart = echarts.init(chartDom, appState.theme === 'dark' ? 'dark' : null);
 
-            // Calculate stage progress
             const stageData = STAGES.map(s => {
-                // Count completed days in this stage range
-                // Stage 1: Day 1 - 32
-                // Stage 2: Day 33 - 62
-                // Stage 3: Day 63 - 90
                 let count = 0;
                 const start = s.name === "基础重塑" ? 1 : (s.name === "强化刷题" ? 33 : 63);
                 const end = s.endDay;
-                
+
                 appState.completedDays.forEach(dateStr => {
                     const dayNum = diffDays(START_DATE, dateStr) + 1;
                     if (dayNum >= start && dayNum <= end) count++;
                 });
-                
+
                 return { name: s.name, value: count, max: end - start + 1 };
             });
 
@@ -778,39 +1064,283 @@
                     axisLine: { show: false },
                     axisTick: { show: false }
                 },
-                series: [
-                    {
-                        name: '已完成天数',
-                        type: 'bar',
-                        data: stageData.map(d => ({
-                            value: d.value,
-                            itemStyle: { borderRadius: [0, 10, 10, 0], color: '#3b82f6' }
-                        })),
-                        label: {
-                            show: true,
-                            position: 'right',
-                            formatter: (p) => `${p.value} / ${stageData[p.dataIndex].max}`
-                        },
-                        barWidth: '50%'
-                    }
-                ]
+                series: [{
+                    name: '已完成天数',
+                    type: 'bar',
+                    data: stageData.map(d => ({
+                        value: d.value,
+                        itemStyle: { borderRadius: [0, 10, 10, 0], color: '#3b82f6' }
+                    })),
+                    label: {
+                        show: true,
+                        position: 'right',
+                        formatter: (p) => `${p.value} / ${stageData[p.dataIndex].max}`
+                    },
+                    barWidth: '50%'
+                }]
             };
             stageChart.setOption(option);
 
-            // Badges
             const badgeGrid = document.getElementById('badge-grid');
             badgeGrid.innerHTML = '';
             BADGES.forEach(badge => {
                 const isUnlocked = completedCount >= badge.condition;
                 const div = document.createElement('div');
-                div.className = "flex flex-col items-center justify-center p-2 rounded-lg " + (isUnlocked ? "bg-yellow-50 dark:bg-yellow-900/20" : "bg-gray-100 dark:bg-gray-800 opacity-50 grayscale");
+                div.className = "flex flex-col items-center justify-center p-2 rounded-lg " + (isUnlocked ?
+                    "bg-yellow-50 dark:bg-yellow-900/20" : "bg-gray-100 dark:bg-gray-800 opacity-50 grayscale");
                 div.innerHTML = `
-                    <i class="fas ${badge.icon} text-2xl mb-1 ${badge.color}"></i>
-                    <span class="text-[10px] text-center leading-tight">${badge.name}</span>
-                    <span class="text-[9px] text-gray-400 mt-1">${badge.condition}天</span>
-                `;
+                        <i class="fas ${badge.icon} text-2xl mb-1 ${badge.color}"></i>
+                        <span class="text-[10px] text-center leading-tight">${badge.name}</span>
+                        <span class="text-[9px] text-gray-400 mt-1">${badge.condition}天</span>
+                    `;
                 badgeGrid.appendChild(div);
             });
+        }
+
+        // --- Task CRUD Operations ---
+
+        function toggleTask(dateStr, index, isChecked) {
+            if (appState.tasks[dateStr] && appState.tasks[dateStr].tasks[index]) {
+                appState.tasks[dateStr].tasks[index].done = isChecked;
+                saveData();
+                const currentView = document.querySelector('.view-section:not(.hidden)');
+                if (currentView) {
+                    if (currentView.id === 'view-today') {
+                        renderToday();
+                    } else if (currentView.id === 'view-calendar') {
+                        renderCalendar();
+                    } else if (currentView.id === 'view-cockpit') {
+                        renderCockpit();
+                    }
+                }
+                updateCompletedDays();
+                if (document.getElementById('view-cockpit').classList.contains('hidden') === false) {
+                    renderCockpit();
+                }
+            }
+        }
+
+        function updateCompletedDays() {
+            const completed = [];
+            for (const date in appState.tasks) {
+                const tasks = appState.tasks[date].tasks;
+                if (tasks && tasks.length > 0 && tasks.every(t => t.done)) {
+                    completed.push(date);
+                }
+            }
+            appState.completedDays = completed;
+            saveData();
+        }
+
+        function openTaskModal(dateStr, index) {
+            const modal = document.getElementById('task-modal');
+            const title = document.getElementById('task-modal-title');
+            const dateInput = document.getElementById('task-modal-date');
+            const indexInput = document.getElementById('task-modal-index');
+            const tagInput = document.getElementById('task-modal-tag');
+            const contentInput = document.getElementById('task-modal-content');
+            const goalInput = document.getElementById('task-modal-goal');
+
+            dateInput.value = dateStr;
+
+            if (index !== undefined && index >= 0) {
+                const taskData = appState.tasks[dateStr]?.tasks[index];
+                if (!taskData) {
+                    showToast('任务不存在', 'error');
+                    return;
+                }
+                title.innerText = '编辑任务';
+                indexInput.value = index;
+                tagInput.value = taskData.tag || '';
+                contentInput.value = taskData.content || '';
+                goalInput.value = taskData.goal || '';
+            } else {
+                title.innerText = '添加任务';
+                indexInput.value = '-1';
+                tagInput.value = '';
+                contentInput.value = '';
+                goalInput.value = '';
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => contentInput.focus(), 100);
+        }
+
+        function closeTaskModal() {
+            document.getElementById('task-modal').classList.add('hidden');
+        }
+
+        function saveTaskFromModal() {
+            const dateStr = document.getElementById('task-modal-date').value;
+            const index = parseInt(document.getElementById('task-modal-index').value);
+            const tag = document.getElementById('task-modal-tag').value.trim();
+            const content = document.getElementById('task-modal-content').value.trim();
+            const goal = document.getElementById('task-modal-goal').value.trim();
+
+            if (!tag) {
+                showToast('请输入标签', 'error');
+                return;
+            }
+            if (!content) {
+                showToast('请输入任务内容', 'error');
+                return;
+            }
+
+            if (!appState.tasks[dateStr]) {
+                appState.tasks[dateStr] = { tasks: [], note: "" };
+            }
+
+            const taskObj = { tag, content, goal, done: false };
+
+            if (index >= 0 && index < appState.tasks[dateStr].tasks.length) {
+                const existing = appState.tasks[dateStr].tasks[index];
+                taskObj.done = existing.done || false;
+                appState.tasks[dateStr].tasks[index] = taskObj;
+                showToast('任务已更新', 'success');
+            } else {
+                appState.tasks[dateStr].tasks.push(taskObj);
+                showToast('任务已添加', 'success');
+            }
+
+            saveData();
+            closeTaskModal();
+
+            const currentView = document.querySelector('.view-section:not(.hidden)');
+            if (currentView) {
+                if (currentView.id === 'view-today') {
+                    renderToday();
+                } else if (currentView.id === 'view-calendar') {
+                    renderCalendar();
+                } else if (currentView.id === 'view-cockpit') {
+                    renderCockpit();
+                }
+            }
+            updateCompletedDays();
+        }
+
+        function deleteTask(dateStr, index) {
+            if (!appState.tasks[dateStr] || !appState.tasks[dateStr].tasks[index]) {
+                showToast('任务不存在', 'error');
+                return;
+            }
+            appState.tasks[dateStr].tasks.splice(index, 1);
+            if (!appState.tasks[dateStr].tasks) {
+                appState.tasks[dateStr].tasks = [];
+            }
+            saveData();
+            updateCompletedDays();
+
+            const currentView = document.querySelector('.view-section:not(.hidden)');
+            if (currentView) {
+                if (currentView.id === 'view-today') {
+                    renderToday();
+                } else if (currentView.id === 'view-calendar') {
+                    renderCalendar();
+                } else if (currentView.id === 'view-cockpit') {
+                    renderCockpit();
+                }
+            }
+            showToast('任务已删除', 'info');
+        }
+
+        // --- Template Modal ---
+        function openTemplateModal(dateStr) {
+            const modal = document.getElementById('template-modal');
+            const list = document.getElementById('template-list');
+            list.innerHTML = '';
+
+            TEMPLATES.forEach((template, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition";
+                item.innerHTML = `
+                        <div>
+                            <span class="text-xs font-bold text-primary bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded">${template.tag}</span>
+                            <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">${template.content}</p>
+                            ${template.goal ? `<p class="text-xs text-blue-500 dark:text-blue-400">目标：${template.goal}</p>` : ''}
+                        </div>
+                        <i class="fas fa-plus-circle text-primary text-lg"></i>
+                    `;
+                item.onclick = () => {
+                    // 将模板添加到指定日期
+                    if (!appState.tasks[dateStr]) {
+                        appState.tasks[dateStr] = { tasks: [], note: "" };
+                    }
+                    appState.tasks[dateStr].tasks.push({
+                        tag: template.tag,
+                        content: template.content,
+                        goal: template.goal || '',
+                        done: false
+                    });
+                    saveData();
+                    closeTemplateModal();
+                    const currentView = document.querySelector('.view-section:not(.hidden)');
+                    if (currentView) {
+                        if (currentView.id === 'view-today') {
+                            renderToday();
+                        } else if (currentView.id === 'view-calendar') {
+                            renderCalendar();
+                        }
+                    }
+                    showToast('模板已添加', 'success');
+                };
+                list.appendChild(item);
+            });
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeTemplateModal() {
+            document.getElementById('template-modal').classList.add('hidden');
+        }
+
+        // --- Export Today Plan ---
+        function exportTodayPlan() {
+            const todayStr = getDateString(new Date());
+            const dayData = appState.tasks[todayStr];
+            if (!dayData || !dayData.tasks || dayData.tasks.length === 0) {
+                showToast('今日暂无任务可导出', 'error');
+                return;
+            }
+
+            const groups = {};
+            dayData.tasks.forEach(task => {
+                if (!groups[task.tag]) groups[task.tag] = [];
+                groups[task.tag].push(task);
+            });
+
+            let lines = [];
+            let counter = 1;
+            // 自定义标签顺序
+            const tagOrder = ['行测-资料分析', '申论', '常识时政', '申论规范词积累', '复盘', '行测-言语理解', '行测-判断推理', '行测-数量关系', '其他'];
+            const sortedTags = Object.keys(groups).sort((a, b) => {
+                const idxA = tagOrder.indexOf(a) === -1 ? 999 : tagOrder.indexOf(a);
+                const idxB = tagOrder.indexOf(b) === -1 ? 999 : tagOrder.indexOf(b);
+                return idxA - idxB;
+            });
+
+            for (const tag of sortedTags) {
+                const tasks = groups[tag];
+                tasks.forEach(task => {
+                    let taskText = `${counter}、${tag}：${task.content}`;
+                    if (task.goal) taskText += `（目标：${task.goal}）`;
+                    lines.push(taskText);
+                    counter++;
+                });
+            }
+
+            if (dayData.note) {
+                lines.push(`\n备注：${dayData.note}`);
+            }
+
+            const content = lines.join('\n');
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `今日计划_${todayStr}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('今日计划导出成功', 'success');
         }
 
         // --- Data Management ---
@@ -829,16 +1359,20 @@
         function importData(e) {
             const file = e.target.files[0];
             if (!file) return;
-            
+
             const reader = new FileReader();
             reader.onload = (event) => {
                 try {
                     const data = JSON.parse(event.target.result);
-                    if (data.tasks && data.completedDays) {
+                    if (data.tasks && data.completedDays !== undefined) {
                         appState = data;
                         saveData();
                         applyTheme();
-                        location.reload(); // Reload to refresh all views cleanly
+                        renderCountdowns();
+                        renderToday();
+                        renderCalendar();
+                        renderCockpit();
+                        showToast('数据导入成功', 'success');
                     } else {
                         throw new Error("格式不正确");
                     }
@@ -847,7 +1381,7 @@
                 }
             };
             reader.readAsText(file);
-            e.target.value = ''; // Reset input
+            e.target.value = '';
         }
 
         function resetData() {
@@ -859,12 +1393,10 @@
 
         // --- Init ---
         window.addEventListener('DOMContentLoaded', initApp);
-        
-        // Handle window resize for ECharts
+
         window.addEventListener('resize', () => {
             if (stageChart) stageChart.resize();
         });
-
     </script>
 </body>
 </html>
