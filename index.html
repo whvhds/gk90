@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta content="default-src 'none'; style-src * 'unsafe-inline'; script-src * 'unsafe-inline'; img-src * data: blob:; font-src * data:; media-src * data: blob:; connect-src 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'" http-equiv="Content-Security-Policy"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>考公任务速览 - 90天冲刺计划</title>
+<!-- Tailwind CSS -->
+<script src="https://image.uc.cn/s/uae/g/3n/mos-production/0915/3.4.17.js"></script>
+<script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                        darkbg: '#0f172a',
+                        darkcard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+<!-- Font Awesome -->
+<script src="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/js/all.min.js"></script>
+<link href="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/css/fontawesome.min.css" rel="stylesheet"/>
+<!-- ECharts -->
+<script src="https://image.uc.cn/s/uae/g/3n/mos-production/cdn-staticfile-net/echarts/5.4.3/echarts.min.js"></script>
+<style>
+        /* Custom Scrollbar hide */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Checkbox styling */
+        .custom-checkbox:checked + div {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+        
+        /* Dark mode transitions */
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Toast Animation */
+        @keyframes slideInDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 20px); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .toast-enter {
+            animation: slideInDown 0.3s forwards;
+        }
+        .toast-exit {
+            animation: fadeOut 0.3s forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-darkbg dark:text-gray-100 h-screen flex flex-col overflow-hidden font-sans">
+<!-- Toast Container -->
+<div class="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none" id="toast-container"></div>
+<!-- Header -->
+<header class="bg-white dark:bg-darkcard shadow-sm z-10 flex-none">
+<div class="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
+<h1 class="text-lg font-bold tracking-wide">考公速览</h1>
+<div class="flex items-center space-x-3">
+<button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" id="theme-toggle">
+<i class="fas fa-moon dark:hidden text-gray-600"></i>
+<i class="fas fa-sun hidden dark:inline text-yellow-400"></i>
+</button>
+<button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" id="settings-btn">
+<i class="fas fa-cog text-gray-600 dark:text-gray-300"></i>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto no-scrollbar relative bg-gray-50 dark:bg-darkbg w-full max-w-md mx-auto">
+<!-- Countdown Section (Fixed at top of main) -->
+<section class="bg-white dark:bg-darkcard py-3 shadow-sm mb-2 flex-none" id="countdown-section">
+<div class="px-4">
+<div class="flex space-x-3 overflow-x-auto no-scrollbar pb-1" id="countdown-container">
+<!-- Countdown items injected by JS -->
+</div>
+</div>
+</section>
+<!-- View: Today -->
+<section class="view-section px-4 pb-20 hidden" id="view-today">
+<div class="flex justify-between items-end mb-4 mt-2">
+<div>
+<h2 class="text-2xl font-bold text-gray-900 dark:text-white" id="today-date-title">今日计划</h2>
+<p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="today-day-count">第 1 天</p>
+</div>
+<div class="text-right">
+<span class="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded dark:bg-blue-900 dark:text-blue-200" id="current-stage-badge">基础重塑</span>
+</div>
+</div>
+<!-- Daily Tip -->
+<div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-3 mb-4 rounded-r text-sm text-yellow-800 dark:text-yellow-200" id="daily-tip">
+<!-- Tip injected by JS -->
+</div>
+<!-- Task List -->
+<div class="space-y-4" id="today-task-list">
+<!-- Tasks injected by JS -->
+</div>
+<!-- Note Area -->
+<div class="mt-6">
+<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">今日备注</label>
+<textarea class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-darkcard focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm transition" id="daily-note" placeholder="记录错题数量、心得体会..." rows="3"></textarea>
+</div>
+</section>
+<!-- View: Calendar -->
+<section class="view-section px-4 pb-20 hidden" id="view-calendar">
+<div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 mt-4">
+<div class="flex justify-between items-center mb-4">
+<button class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" id="prev-month"><i class="fas fa-chevron-left"></i></button>
+<h2 class="text-lg font-bold" id="calendar-month-title">2026年 7月</h2>
+<button class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" id="next-month"><i class="fas fa-chevron-right"></i></button>
+</div>
+<!-- Weekdays -->
+<div class="grid grid-cols-7 text-center text-xs font-semibold text-gray-400 mb-2">
+<div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+</div>
+<!-- Days Grid -->
+<div class="grid grid-cols-7 gap-y-2 gap-x-1 text-center text-sm" id="calendar-grid">
+<!-- Days injected by JS -->
+</div>
+</div>
+<!-- Selected Date Tasks -->
+<div class="mt-6 hidden" id="selected-date-tasks-container">
+<h3 class="text-lg font-bold mb-3 border-l-4 border-primary pl-3" id="selected-date-title">7月22日 任务</h3>
+<div class="space-y-3" id="selected-date-task-list">
+<!-- Tasks for selected date -->
+</div>
+</div>
+</section>
+<!-- View: Cockpit -->
+<section class="view-section px-4 pb-20 hidden" id="view-cockpit">
+<h2 class="text-xl font-bold mb-4 mt-4">学情驾驶舱</h2>
+<!-- Progress Card -->
+<div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 mb-4">
+<h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">总体进度</h3>
+<div class="flex items-center justify-between mb-2">
+<span class="text-3xl font-bold text-primary" id="progress-percentage">0%</span>
+<span class="text-xs text-gray-500 dark:text-gray-400" id="progress-days-text">0/90 天</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+<div class="bg-primary h-2.5 rounded-full" id="progress-bar" style="width: 0%"></div>
+</div>
+</div>
+<!-- Chart Card -->
+<div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 mb-4">
+<h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">阶段分析</h3>
+<div id="echarts-stage" style="width: 100%; height: 200px;"></div>
+</div>
+<!-- Badges Card -->
+<div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4">
+<h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">成就徽章</h3>
+<div class="grid grid-cols-4 gap-4" id="badge-grid">
+<!-- Badges injected by JS -->
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation -->
+<nav class="bg-white dark:bg-darkcard border-t border-gray-200 dark:border-gray-700 flex-none z-20">
+<div class="max-w-md mx-auto flex justify-around items-center h-16">
+<button class="nav-btn flex flex-col items-center justify-center w-full h-full text-primary" data-target="view-today">
+<i class="fas fa-calendar-check text-xl mb-1"></i>
+<span class="text-xs">今日</span>
+</button>
+<button class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" data-target="view-calendar">
+<i class="fas fa-calendar-alt text-xl mb-1"></i>
+<span class="text-xs">日历</span>
+</button>
+<button class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" data-target="view-cockpit">
+<i class="fas fa-chart-pie text-xl mb-1"></i>
+<span class="text-xs">驾驶舱</span>
+</button>
+</div>
+</nav>
+<!-- Settings Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4" id="settings-modal">
+<div class="bg-white dark:bg-darkcard rounded-xl w-full max-w-sm shadow-2xl overflow-hidden transform transition-all">
+<div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+<h3 class="font-bold text-lg">设置与数据</h3>
+<button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" id="close-settings"><i class="fas fa-times"></i></button>
+</div>
+<div class="p-4 space-y-4">
+<div>
+<h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">数据管理</h4>
+<div class="flex space-x-2">
+<button class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition" id="export-btn">导出数据</button>
+<button class="flex-1 bg-green-50 text-green-600 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition" id="import-btn">导入数据</button>
+<input accept=".json" class="hidden" id="import-file" type="file"/>
+</div>
+</div>
+<div>
+<h4 class="text-sm font-semibold text-red-500 mb-2">危险区域</h4>
+<button class="w-full bg-red-50 text-red-600 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition" id="reset-btn">重置所有进度</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+        // --- Data & Constants ---
+        const START_DATE = "2026-07-22";
+        const EXAMS = [
+            { name: "国家公务员考试", date: "2026-11-28" },
+            { name: "江苏省公务员考试", date: "2026-12-07" },
+            { name: "江苏省事业单位考试", date: "2027-03-21" }
+        ];
+
+        const STAGES = [
+            { endDay: 32, name: "基础重塑", desc: "做对、搞懂。全程不限时。错题标K/J/S。" },
+            { endDay: 62, name: "强化刷题", desc: "保持K/J/S标记习惯，逐步建立时间意识。" },
+            { endDay: 90, name: "冲刺稳定", desc: "刷真题套卷，保持手感。K/J/S坚持标记到考前。" }
+        ];
+
+        const BADGES = [
+            { id: "first_step", name: "初出茅庐", condition: 1, icon: "fa-seedling", color: "text-green-500" },
+            { id: "week_persist", name: "坚持一周", condition: 7, icon: "fa-fire", color: "text-orange-500" },
+            { id: "month_master", name: "月度达人", condition: 30, icon: "fa-medal", color: "text-blue-500" },
+            { id: "king", name: "上岸之王", condition: 90, icon: "fa-crown", color: "text-yellow-500" }
+        ];
+
+        // Initial 7 Days Data (From Product Design)
+        const INITIAL_TASKS = {
+            "2026-07-22": {
+                tip: "第一次做不对很正常，标清楚错因就行。今天做不完没关系，明天继续。",
+                tasks: [
+                    { tag: "行测-资料分析", content: "翻开讲义第一课「变化」，只看公式汇总，抄在纸上背熟。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。做完对答案，错题标K/J/S。", goal: "能默写四个公式，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道概括题（非江苏）。先独立写，再看视频对答案。写多写少不管，能写出来就算赢。", goal: "能写出答案，不看正确率。" },
+                    { tag: "常识时政", content: "看马克时政最新一期视频，看20分钟。看完截图3个你觉得最可能考的知识点，存相册。不抄笔记。", goal: "今天不追求记住，只追求'看过'。" },
+                    { tag: "申论规范词积累", content: "从小马哥视频的答案里，选1个比你的表达更规范的词，抄进'规范词本'。", goal: "" },
+                    { tag: "复盘", content: "建立行测错题本。不抄题，只记'日期+刷题册名称+章节+题号+K/J/S'。今天记3条试试。", goal: "" }
+                ]
+            },
+            "2026-07-23": {
+                tip: "选项差距大（10/20/30/40）就估；差距小（10.1/10.2/10.3）就硬算。别纠结，看选项差距决定。",
+                tasks: [
+                    { tag: "行测-资料分析", content: "翻开讲义第二课「加减与误差」，只看结论。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "能区分什么时候估什么时候精算，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做第二道概括题（非江苏）。先独立写，再看视频对答案。今天重点关注：你写的词哪些是从材料里抄的，哪些是自己编的？", goal: "能区分'原词'和'自编词'。" },
+                    { tag: "常识时政", content: "继续看马克时政，20分钟。翻看昨天截图的知识点，能说出大概意思就行。", goal: "能复述昨天3个知识点的核心词。" },
+                    { tag: "申论规范词积累", content: "从今天的答案里选1个新规范词抄进本子。", goal: "" },
+                    { tag: "复盘", content: "重做Day1行测错题（只看标了K/J/S的题）。", goal: "" }
+                ]
+            },
+            "2026-07-24": {
+                tip: "增长量带单位（亿元/万吨），增长率带%。题干问'增长了多少'看单位判断。",
+                tasks: [
+                    { tag: "行测-资料分析", content: "翻开讲义第三课「乘除变化」，只看公式。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "能分清增长量和增长率，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道分析题（非江苏）。按'现象+原因+影响'三层写。再看视频对答案。", goal: "能写出至少2层。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。截图3个新知识点。", goal: "" },
+                    { tag: "申论规范词积累", content: "从今天分析题答案里选1个规范词抄进本子。", goal: "" },
+                    { tag: "复盘", content: "整理Day1-2申论答题要点，抄在本子上。", goal: "" }
+                ]
+            },
+            "2026-07-25": {
+                tip: "比重变化看'部分增长率 vs 整体增长率'，a>b则比重上升，反之下降，不用算具体数值。",
+                tasks: [
+                    { tag: "行测-资料分析", content: "翻开讲义第四课「比重类问题」，只看三个公式。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "能默写三个比重公式，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做第二道分析题（非江苏）。重点关注：你的'原因层'有没有用到材料里的原词？", goal: "原因分析有材料依据。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。翻看前两天截图，能说出3个以上知识点的大概意思。", goal: "" },
+                    { tag: "申论规范词积累", content: "从今天答案里选1个规范词。", goal: "" },
+                    { tag: "复盘", content: "统计Day1-4的K/J/S数量，记在错题本扉页。", goal: "" }
+                ]
+            },
+            "2026-07-26": {
+                tip: "问'平均每…增长%'直接用 r=(a-b)/(1+b)，别绕弯硬算。",
+                tasks: [
+                    { tag: "行测-资料分析", content: "翻开讲义第五课「分式混合」，只看平均数公式。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "能做对平均数题，做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道对策题（非江苏）。把所有'问题'圈出来，反推对策。写完后看视频对答案。", goal: "能写出至少3条对策。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。", goal: "" },
+                    { tag: "申论规范词积累", content: "从今天对策题答案里选1个规范词。", goal: "" },
+                    { tag: "复盘", content: "翻看前4天申论答案，漏掉的要点用荧光笔在材料上标出来。", goal: "" }
+                ]
+            },
+            "2026-07-27": {
+                tip: "容斥考得不多，公式记住就行，不用花太多时间。",
+                tasks: [
+                    { tag: "行测-资料分析", content: "翻开讲义第六课「容斥问题」，只看核心结论。合上讲义，打开小P《精选90套刷题册》资料分析部分，做对应章节题目。对答案+错题标K/J/S。", goal: "做对的题≥60%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做第二道对策题（非江苏）。重点关注：你写的对策和答案里的对策差距在哪？", goal: "能写出比昨天更具体的对策。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。", goal: "" },
+                    { tag: "申论规范词积累", content: "从今天答案里选1个规范词。", goal: "" },
+                    { tag: "复盘", content: "遮住答案，重做Day2-5所有标K的行测错题。", goal: "" }
+                ]
+            },
+            "2026-07-28": {
+                tip: "第一次做整篇资料分析，觉得时间长很正常。前7天就是在'热脑子'。",
+                tasks: [
+                    { tag: "行测-资料分析", content: "打开小P《精选90套刷题册》资料分析部分，做第1套完整资料分析，不限时。对答案+错题标K/J/S。", goal: "不限时正确率≥70%。" },
+                    { tag: "申论", content: "打开B站小马哥刷题合集，做一道公文题（非江苏）。先画格式框架，再写内容。写完看视频对答案，重点检查格式。", goal: "格式5要素全部正确。" },
+                    { tag: "常识时政", content: "看马克时政，20分钟。", goal: "" },
+                    { tag: "申论规范词积累", content: "从今天公文题答案里选1个规范词。", goal: "" },
+                    { tag: "复盘", content: "分析资料错题是公式错还是计算错，标清楚。", goal: "" }
+                ]
+            }
+        };
+
+        // --- State Management ---
+        let appState = {
+            tasks: {}, // Key: "YYYY-MM-DD", Value: { tip: "", tasks: [{tag, content, goal, done}], note: "" }
+            completedDays: [], // Array of "YYYY-MM-DD"
+            lastVisitDate: null,
+            theme: 'light'
+        };
+
+        // --- Helper Functions ---
+        function getDateString(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function addDays(dateStr, days) {
+            const date = new Date(dateStr);
+            date.setDate(date.getDate() + days);
+            return getDateString(date);
+        }
+
+        function diffDays(dateStr1, dateStr2) {
+            const d1 = new Date(dateStr1);
+            const d2 = new Date(dateStr2);
+            const timeDiff = d2.getTime() - d1.getTime();
+            return Math.ceil(timeDiff / (1000 * 3600 * 24));
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-gray-800');
+            
+            toast.className = `${bgClass} text-white px-6 py-3 rounded-full shadow-lg text-sm font-medium toast-enter pointer-events-auto`;
+            toast.innerText = message;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Core Logic ---
+
+        function initApp() {
+            loadData();
+            applyTheme();
+            checkRollover();
+            renderCountdowns();
+            switchView('view-today');
+            renderToday();
+            
+            // Listeners
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchView(btn.dataset.target));
+            });
+            
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            document.getElementById('settings-btn').addEventListener('click', () => document.getElementById('settings-modal').classList.remove('hidden'));
+            document.getElementById('close-settings').addEventListener('click', () => document.getElementById('settings-modal').classList.add('hidden'));
+            
+            // Calendar listeners
+            document.getElementById('prev-month').addEventListener('click', () => changeMonth(-1));
+            document.getElementById('next-month').addEventListener('click', () => changeMonth(1));
+
+            // Data Management
+            document.getElementById('export-btn').addEventListener('click', exportData);
+            document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+            document.getElementById('import-file').addEventListener('change', importData);
+            document.getElementById('reset-btn').addEventListener('click', resetData);
+
+            // Note listener
+            document.getElementById('daily-note').addEventListener('input', (e) => {
+                const today = getDateString(new Date());
+                if (!appState.tasks[today]) appState.tasks[today] = { tasks: [], note: "" };
+                appState.tasks[today].note = e.target.value;
+                saveData();
+            });
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('gongkao_app_v1');
+            if (saved) {
+                appState = JSON.parse(saved);
+            } else {
+                // Initialize with first day
+                const firstDay = START_DATE;
+                appState.tasks[firstDay] = JSON.parse(JSON.stringify(INITIAL_TASKS[firstDay]));
+                appState.tasks[firstDay].note = "";
+                appState.tasks[firstDay].tasks.forEach(t => t.done = false);
+                appState.lastVisitDate = firstDay;
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('gongkao_app_v1', JSON.stringify(appState));
+        }
+
+        function checkRollover() {
+            const today = getDateString(new Date());
+            if (appState.lastVisitDate && appState.lastVisitDate !== today) {
+                // Logic: If today has no tasks, check yesterday. If yesterday has unfinished tasks, copy them.
+                if (!appState.tasks[today] || appState.tasks[today].tasks.length === 0) {
+                    const yesterday = addDays(today, -1);
+                    if (appState.tasks[yesterday] && appState.tasks[yesterday].tasks) {
+                        const unfinishedTasks = appState.tasks[yesterday].tasks.filter(t => !t.done);
+                        if (unfinishedTasks.length > 0) {
+                            if (!appState.tasks[today]) appState.tasks[today] = { tasks: [], note: "" };
+                            // Merge: Append unfinished tasks to today (if today is empty or generic)
+                            // Strategy: If today is empty, just copy unfinished. If today has preset content (from INITIAL), maybe don't overwrite?
+                            // Simplified: If today is empty, copy unfinished.
+                            if (appState.tasks[today].tasks.length === 0) {
+                                appState.tasks[today].tasks = JSON.parse(JSON.stringify(unfinishedTasks));
+                                showToast(`已将 ${unfinishedTasks.length} 项未完成任务累积至今日`, 'info');
+                            }
+                        }
+                    }
+                }
+            }
+            appState.lastVisitDate = today;
+            saveData();
+        }
+
+        function applyTheme() {
+            if (appState.theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        function toggleTheme() {
+            appState.theme = appState.theme === 'light' ? 'dark' : 'light';
+            applyTheme();
+            saveData();
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.target === viewId) {
+                    btn.classList.add('text-primary');
+                    btn.classList.remove('text-gray-400', 'dark:text-gray-500');
+                } else {
+                    btn.classList.remove('text-primary');
+                    btn.classList.add('text-gray-400', 'dark:text-gray-500');
+                }
+            });
+
+            if (viewId === 'view-calendar') renderCalendar();
+            if (viewId === 'view-cockpit') renderCockpit();
+        }
+
+        // --- Rendering: Today ---
+        function renderToday() {
+            const todayStr = getDateString(new Date());
+            const dayNum = diffDays(START_DATE, todayStr) + 1;
+            
+            // Title
+            document.getElementById('today-date-title').innerText = "今日计划";
+            document.getElementById('today-day-count').innerText = `第 ${dayNum} 天`;
+            
+            // Stage
+            let currentStage = STAGES[0];
+            for (let s of STAGES) {
+                if (dayNum <= s.endDay) {
+                    currentStage = s;
+                    break;
+                }
+            }
+            document.getElementById('current-stage-badge').innerText = currentStage.name;
+
+            // Data
+            let dayData = appState.tasks[todayStr];
+            
+            // If no data for today, check if we have preset data in INITIAL_TASKS
+            if (!dayData) {
+                if (INITIAL_TASKS[todayStr]) {
+                    dayData = JSON.parse(JSON.stringify(INITIAL_TASKS[todayStr]));
+                    dayData.tasks.forEach(t => t.done = false);
+                    appState.tasks[todayStr] = dayData;
+                    saveData();
+                } else {
+                    dayData = { tip: "坚持就是胜利，保持手感！", tasks: [], note: "" };
+                    appState.tasks[todayStr] = dayData;
+                }
+            }
+
+            // Tip
+            document.getElementById('daily-tip').innerText = dayData.tip || "暂无提示";
+
+            // Note
+            document.getElementById('daily-note').value = dayData.note || "";
+
+            // Tasks
+            const listContainer = document.getElementById('today-task-list');
+            listContainer.innerHTML = '';
+
+            // Group by tag
+            const grouped = {};
+            dayData.tasks.forEach(task => {
+                if (!grouped[task.tag]) grouped[task.tag] = [];
+                grouped[task.tag].push(task);
+            });
+
+            for (const [tag, tasks] of Object.entries(grouped)) {
+                const tagDiv = document.createElement('div');
+                tagDiv.className = "bg-white dark:bg-darkcard rounded-lg shadow-sm p-4 border-l-4 border-primary";
+                
+                const tagTitle = document.createElement('h3');
+                tagTitle.className = "font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center";
+                tagTitle.innerHTML = `<span class="w-2 h-2 rounded-full bg-primary mr-2"></span>${tag}`;
+                tagDiv.appendChild(tagTitle);
+
+                tasks.forEach((task, index) => {
+                    // Find original index to update correctly
+                    const originalIndex = dayData.tasks.indexOf(task);
+                    
+                    const taskItem = document.createElement('div');
+                    taskItem.className = "mb-4 last:mb-0";
+                    
+                    const checkWrapper = document.createElement('label');
+                    checkWrapper.className = "flex items-start space-x-3 cursor-pointer group";
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = "checkbox";
+                    checkbox.className = "custom-checkbox mt-1 w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary cursor-pointer";
+                    checkbox.checked = task.done;
+                    checkbox.onchange = (e) => toggleTask(todayStr, originalIndex, e.target.checked);
+
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = "flex-1 transition-colors duration-200";
+                    if (task.done) contentDiv.classList.add('text-gray-400', 'line-through');
+
+                    const pContent = document.createElement('p');
+                    pContent.className = "text-sm leading-relaxed text-gray-700 dark:text-gray-300";
+                    pContent.innerText = task.content;
+
+                    contentDiv.appendChild(pContent);
+
+                    if (task.goal) {
+                        const pGoal = document.createElement('p');
+                        pGoal.className = "text-xs text-blue-500 dark:text-blue-400 mt-1 font-medium";
+                        pGoal.innerText = `目标: ${task.goal}`;
+                        contentDiv.appendChild(pGoal);
+                    }
+
+                    checkWrapper.appendChild(checkbox);
+                    checkWrapper.appendChild(contentDiv);
+                    taskItem.appendChild(checkWrapper);
+                    tagDiv.appendChild(taskItem);
+                });
+
+                listContainer.appendChild(tagDiv);
+            }
+        }
+
+        function toggleTask(dateStr, index, isChecked) {
+            if (appState.tasks[dateStr] && appState.tasks[dateStr].tasks[index]) {
+                appState.tasks[dateStr].tasks[index].done = isChecked;
+                saveData();
+                renderToday(); // Re-render to update styles and progress logic if needed
+                
+                // Update completed days list
+                updateCompletedDays();
+            }
+        }
+
+        function updateCompletedDays() {
+            // Recalculate completed days based on all tasks in history
+            const completed = [];
+            for (const date in appState.tasks) {
+                const tasks = appState.tasks[date].tasks;
+                if (tasks && tasks.length > 0 && tasks.every(t => t.done)) {
+                    completed.push(date);
+                }
+            }
+            appState.completedDays = completed;
+            saveData();
+        }
+
+        // --- Rendering: Countdown ---
+        function renderCountdowns() {
+            const container = document.getElementById('countdown-container');
+            container.innerHTML = '';
+            const today = new Date();
+
+            EXAMS.forEach(exam => {
+                const examDate = new Date(exam.date);
+                const diff = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+                
+                const div = document.createElement('div');
+                div.className = "flex-none bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-3 min-w-[100px] shadow-md";
+                div.innerHTML = `
+                    <div class="text-xs opacity-80 mb-1 truncate">${exam.name}</div>
+                    <div class="text-xl font-bold">${diff} <span class="text-xs font-normal">天</span></div>
+                    <div class="text-[10px] opacity-70 mt-1">${exam.date.slice(5)}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- Rendering: Calendar ---
+        let currentCalendarDate = new Date();
+
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            document.getElementById('calendar-month-title').innerText = `${year}年 ${month + 1}月`;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            const startDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday start
+            const totalDays = lastDay.getDate();
+            
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            
+            // Empty cells
+            for (let i = 0; i < startDayOfWeek; i++) {
+                grid.appendChild(document.createElement('div'));
+            }
+            
+            const todayStr = getDateString(new Date());
+            
+            // Days
+            for (let d = 1; d <= totalDays; d++) {
+                const dateStr = getDateString(new Date(year, month, d));
+                const dayEl = document.createElement('div');
+                dayEl.className = "h-8 w-8 flex items-center justify-center rounded-full text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 mx-auto transition relative";
+                
+                if (dateStr === todayStr) {
+                    dayEl.classList.add('bg-primary', 'text-white', 'hover:bg-primary');
+                } else if (appState.tasks[dateStr] && appState.tasks[dateStr].tasks.every(t => t.done)) {
+                    dayEl.classList.add('text-green-600', 'font-bold');
+                } else if (appState.tasks[dateStr]) {
+                    dayEl.classList.add('text-blue-600', 'font-semibold');
+                }
+                
+                dayEl.innerText = d;
+                dayEl.onclick = () => showDateTasks(dateStr, dayEl);
+                grid.appendChild(dayEl);
+            }
+        }
+
+        function changeMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function showDateTasks(dateStr, el) {
+            // Highlight selection
+            document.querySelectorAll('#calendar-grid > div').forEach(d => d.classList.remove('ring-2', 'ring-offset-1', 'ring-primary'));
+            if(el) el.classList.add('ring-2', 'ring-offset-1', 'ring-primary');
+
+            const container = document.getElementById('selected-date-tasks-container');
+            const title = document.getElementById('selected-date-title');
+            const list = document.getElementById('selected-date-task-list');
+            
+            container.classList.remove('hidden');
+            const [y, m, d] = dateStr.split('-');
+            title.innerText = `${parseInt(m)}月${parseInt(d)}日 任务`;
+            
+            list.innerHTML = '';
+            
+            const data = appState.tasks[dateStr];
+            if (!data || !data.tasks || data.tasks.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">本日无任务或未开始</div>';
+                return;
+            }
+
+            // Simple list for calendar view (read-only mostly, but allow toggle)
+            data.tasks.forEach((task, idx) => {
+                const item = document.createElement('div');
+                item.className = "bg-white dark:bg-darkcard p-3 rounded shadow-sm border border-gray-100 dark:border-gray-700";
+                
+                const header = document.createElement('div');
+                header.className = "flex justify-between items-start mb-1";
+                
+                const tagSpan = document.createElement('span');
+                tagSpan.className = "text-xs font-bold text-primary bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded";
+                tagSpan.innerText = task.tag;
+                
+                const check = document.createElement('input');
+                check.type = "checkbox";
+                check.checked = task.done;
+                check.className = "w-4 h-4 text-primary rounded cursor-pointer";
+                check.onchange = (e) => {
+                    toggleTask(dateStr, idx, e.target.checked);
+                    renderCalendar(); // Refresh calendar indicators
+                };
+
+                header.appendChild(tagSpan);
+                header.appendChild(check);
+                
+                const content = document.createElement('p');
+                content.className = "text-sm text-gray-700 dark:text-gray-300 " + (task.done ? "line-through text-gray-400" : "");
+                content.innerText = task.content;
+                
+                item.appendChild(header);
+                item.appendChild(content);
+                list.appendChild(item);
+            });
+        }
+
+        // --- Rendering: Cockpit ---
+        let stageChart = null;
+
+        function renderCockpit() {
+            updateCompletedDays();
+            const totalDays = 90;
+            const completedCount = appState.completedDays.length;
+            const percent = Math.round((completedCount / totalDays) * 100);
+            
+            document.getElementById('progress-percentage').innerText = `${percent}%`;
+            document.getElementById('progress-days-text').innerText = `${completedCount}/${totalDays} 天`;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+
+            // ECharts
+            const chartDom = document.getElementById('echarts-stage');
+            if (stageChart) stageChart.dispose();
+            stageChart = echarts.init(chartDom, appState.theme === 'dark' ? 'dark' : null);
+
+            // Calculate stage progress
+            const stageData = STAGES.map(s => {
+                // Count completed days in this stage range
+                // Stage 1: Day 1 - 32
+                // Stage 2: Day 33 - 62
+                // Stage 3: Day 63 - 90
+                let count = 0;
+                const start = s.name === "基础重塑" ? 1 : (s.name === "强化刷题" ? 33 : 63);
+                const end = s.endDay;
+                
+                appState.completedDays.forEach(dateStr => {
+                    const dayNum = diffDays(START_DATE, dateStr) + 1;
+                    if (dayNum >= start && dayNum <= end) count++;
+                });
+                
+                return { name: s.name, value: count, max: end - start + 1 };
+            });
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    show: false
+                },
+                yAxis: {
+                    type: 'category',
+                    data: stageData.map(d => d.name),
+                    axisLine: { show: false },
+                    axisTick: { show: false }
+                },
+                series: [
+                    {
+                        name: '已完成天数',
+                        type: 'bar',
+                        data: stageData.map(d => ({
+                            value: d.value,
+                            itemStyle: { borderRadius: [0, 10, 10, 0], color: '#3b82f6' }
+                        })),
+                        label: {
+                            show: true,
+                            position: 'right',
+                            formatter: (p) => `${p.value} / ${stageData[p.dataIndex].max}`
+                        },
+                        barWidth: '50%'
+                    }
+                ]
+            };
+            stageChart.setOption(option);
+
+            // Badges
+            const badgeGrid = document.getElementById('badge-grid');
+            badgeGrid.innerHTML = '';
+            BADGES.forEach(badge => {
+                const isUnlocked = completedCount >= badge.condition;
+                const div = document.createElement('div');
+                div.className = "flex flex-col items-center justify-center p-2 rounded-lg " + (isUnlocked ? "bg-yellow-50 dark:bg-yellow-900/20" : "bg-gray-100 dark:bg-gray-800 opacity-50 grayscale");
+                div.innerHTML = `
+                    <i class="fas ${badge.icon} text-2xl mb-1 ${badge.color}"></i>
+                    <span class="text-[10px] text-center leading-tight">${badge.name}</span>
+                    <span class="text-[9px] text-gray-400 mt-1">${badge.condition}天</span>
+                `;
+                badgeGrid.appendChild(div);
+            });
+        }
+
+        // --- Data Management ---
+        function exportData() {
+            const dataStr = JSON.stringify(appState, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gongkao_backup_${getDateString(new Date())}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('数据导出成功', 'success');
+        }
+
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.tasks && data.completedDays) {
+                        appState = data;
+                        saveData();
+                        applyTheme();
+                        location.reload(); // Reload to refresh all views cleanly
+                    } else {
+                        throw new Error("格式不正确");
+                    }
+                } catch (err) {
+                    showToast('导入失败：文件格式错误', 'error');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // Reset input
+        }
+
+        function resetData() {
+            if (confirm("确定要重置所有进度吗？此操作不可恢复。")) {
+                localStorage.removeItem('gongkao_app_v1');
+                location.reload();
+            }
+        }
+
+        // --- Init ---
+        window.addEventListener('DOMContentLoaded', initApp);
+        
+        // Handle window resize for ECharts
+        window.addEventListener('resize', () => {
+            if (stageChart) stageChart.resize();
+        });
+
+    </script>
+</body>
+</html>
