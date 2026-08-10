@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
     <title>考公任务速览 · 冲刺计划</title>
+    <!-- 引入tailwind, fontawesome, echarts, sortable 略，同前 -->
     <script src="https://image.uc.cn/s/uae/g/3n/mos-production/0915/3.4.17.js"></script>
     <script>
         tailwind.config = {
@@ -25,6 +26,7 @@
     <script src="https://image.uc.cn/s/uae/g/3n/mos-production/cdn-staticfile-net/echarts/5.4.3/echarts.min.js"></script>
     <script src="https://image.uc.cn/s/uae/g/3n/mos-production/cdnjs-cloudflare-com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
+        /* 样式，与之前完全相同，保留所有样式 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .custom-checkbox:checked+div { text-decoration: line-through; color: #9ca3af; }
@@ -59,16 +61,30 @@
         .cockpit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .cockpit-grid .full { grid-column: 1 / -1; }
         @media (max-width: 600px) { .cockpit-grid { grid-template-columns: 1fr; } }
-        /* 倒计时折叠 */
         .countdown-toggle { cursor: pointer; user-select: none; }
         .countdown-toggle i { transition: transform 0.3s; }
         .countdown-toggle.open i { transform: rotate(180deg); }
         .countdown-body { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
         .countdown-body.open { max-height: 300px; }
-        /* 设置UI优化 */
         .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         @media (max-width: 480px) { .settings-grid { grid-template-columns: 1fr; } }
         .settings-input { width: 100%; min-width: 0; }
+        .task-done-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .task-done-wrapper.open { max-height: 2000px; }
+        .task-done-toggle { cursor: pointer; user-select: none; }
+        .task-done-toggle i { transition: transform 0.3s; }
+        .task-done-toggle.open i { transform: rotate(180deg); }
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .filter-bar select, .filter-bar input { padding: 4px 8px; border-radius: 6px; border: 1px solid #e5e7eb; background: #fff; font-size: 12px; }
+        .dark .filter-bar select, .dark .filter-bar input { background: #1e293b; border-color: #374151; color: #e5e7eb; }
+        .filter-bar .filter-clear { cursor: pointer; font-size: 12px; color: #ef4444; }
+        .quick-template-dropdown { position: relative; display: inline-block; }
+        .quick-template-dropdown-content { display: none; position: absolute; right: 0; background: #fff; min-width: 160px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-radius: 8px; padding: 4px 0; z-index: 10; }
+        .dark .quick-template-dropdown-content { background: #1e293b; }
+        .quick-template-dropdown-content button { display: block; width: 100%; text-align: left; padding: 6px 12px; font-size: 12px; background: transparent; border: none; cursor: pointer; }
+        .quick-template-dropdown-content button:hover { background: #f3f4f6; }
+        .dark .quick-template-dropdown-content button:hover { background: #334155; }
+        .quick-template-dropdown:hover .quick-template-dropdown-content { display: block; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-darkbg dark:text-gray-100 h-screen flex flex-col overflow-hidden font-sans antialiased">
@@ -87,7 +103,7 @@
 
     <!-- Main -->
     <main class="flex-1 overflow-y-auto no-scrollbar relative bg-gray-50/80 dark:bg-darkbg/80 w-full max-w-md mx-auto pb-20">
-        <!-- 倒计时 - 折叠样式 -->
+        <!-- 倒计时折叠 -->
         <section id="countdown-section" class="bg-white/60 dark:bg-darkcard/60 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50">
             <div class="px-4 py-1.5">
                 <div class="countdown-toggle flex items-center justify-between text-sm text-gray-600 dark:text-gray-300" id="countdown-toggle">
@@ -120,7 +136,7 @@
     </nav>
 
     <!-- ===================== 模态框 ===================== -->
-    <!-- 设置 - 移动端优化 -->
+    <!-- 设置 -->
     <div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-3 modal-overlay">
         <div class="bg-white dark:bg-darkcard rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl modal-content">
             <div class="sticky top-0 bg-white dark:bg-darkcard z-10 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -128,40 +144,10 @@
                 <button id="close-settings" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-4 space-y-5">
-                <!-- 计划日期 -->
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📅 计划日期</h4>
-                    <div class="settings-grid">
-                        <div><label class="block text-xs text-gray-500 mb-0.5">开始</label><input type="date" id="settings-start-date" class="settings-input p-1.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" /></div>
-                        <div><label class="block text-xs text-gray-500 mb-0.5">结束</label><input type="date" id="settings-end-date" class="settings-input p-1.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" /></div>
-                    </div>
-                    <button id="save-dates-btn" class="mt-2 w-full bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-300 py-1.5 rounded-lg text-sm transition">更新日期</button>
-                </div>
-                <!-- 考试倒计时 -->
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">⏳ 考试倒计时</h4>
-                    <div id="exam-list-container" class="space-y-1.5"></div>
-                    <div class="flex flex-wrap gap-2 mt-2">
-                        <input type="text" id="new-exam-name" class="flex-1 min-w-[120px] p-1.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" placeholder="考试名称" />
-                        <input type="date" id="new-exam-date" class="flex-1 min-w-[120px] p-1.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" />
-                        <button id="add-exam-btn" class="bg-primary text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition whitespace-nowrap">添加</button>
-                    </div>
-                </div>
-                <!-- 数据管理 -->
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">💾 数据管理</h4>
-                    <div class="flex flex-wrap gap-2">
-                        <button id="export-btn" class="flex-1 min-w-[80px] bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition">导出 JSON</button>
-                        <button id="import-btn" class="flex-1 min-w-[80px] bg-green-50 text-green-600 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition">导入 JSON</button>
-                        <input type="file" accept=".json" id="import-file" class="hidden" />
-                    </div>
-                    <button id="export-excel-btn" class="mt-2 w-full bg-purple-50 text-purple-600 py-2 rounded-lg text-sm font-medium hover:bg-purple-100 transition">📊 导出 Excel (CSV)</button>
-                </div>
-                <!-- 危险区域 -->
-                <div>
-                    <h4 class="text-sm font-semibold text-red-500 mb-2">⚠️ 危险区域</h4>
-                    <button id="reset-btn" class="w-full bg-red-50 text-red-600 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition">重置所有数据</button>
-                </div>
+                <div><h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📅 计划日期</h4><div class="settings-grid"><div><label class="block text-xs text-gray-500 mb-0.5">开始</label><input type="date" id="settings-start-date" class="settings-input p-1.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" /></div><div><label class="block text-xs text-gray-500 mb-0.5">结束</label><input type="date" id="settings-end-date" class="settings-input p-1.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" /></div></div><button id="save-dates-btn" class="mt-2 w-full bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-300 py-1.5 rounded-lg text-sm transition">更新日期</button></div>
+                <div><h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">⏳ 考试倒计时</h4><div id="exam-list-container" class="space-y-1.5"></div><div class="flex flex-wrap gap-2 mt-2"><input type="text" id="new-exam-name" class="flex-1 min-w-[120px] p-1.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" placeholder="考试名称" /><input type="date" id="new-exam-date" class="flex-1 min-w-[120px] p-1.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" /><button id="add-exam-btn" class="bg-primary text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition whitespace-nowrap">添加</button></div></div>
+                <div><h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">💾 数据管理</h4><div class="flex flex-wrap gap-2"><button id="export-btn" class="flex-1 min-w-[80px] bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition">导出 JSON</button><button id="import-btn" class="flex-1 min-w-[80px] bg-green-50 text-green-600 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition">导入 JSON</button><input type="file" accept=".json" id="import-file" class="hidden" /></div><button id="export-excel-btn" class="mt-2 w-full bg-purple-50 text-purple-600 py-2 rounded-lg text-sm font-medium hover:bg-purple-100 transition">📊 导出 Excel (CSV)</button></div>
+                <div><h4 class="text-sm font-semibold text-red-500 mb-2">⚠️ 危险区域</h4><button id="reset-btn" class="w-full bg-red-50 text-red-600 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition">重置所有数据</button></div>
             </div>
         </div>
     </div>
@@ -174,14 +160,59 @@
                 <button id="close-task-modal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-4 space-y-3">
-                <input type="hidden" id="task-modal-date" /><input type="hidden" id="task-modal-index" value="-1" />
-                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">标签</label><input id="task-modal-tag" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" placeholder="如：行测-资料分析" list="tag-suggestions" /><datalist id="tag-suggestions"><option value="行测-资料分析"><option value="申论"><option value="常识时政"><option value="复盘"><option value="行测-言语理解"><option value="行测-判断推理"><option value="行测-数量关系"></datalist></div>
-                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">任务内容</label><textarea id="task-modal-content" rows="3" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm resize-none"></textarea></div>
-                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">目标（可选）</label><input id="task-modal-goal" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">优先级</label><select id="task-modal-priority" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm"><option value="low">低</option><option value="medium" selected>中</option><option value="high">高</option><option value="urgent">紧急</option></select></div>
-                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">关联题本</label><select id="task-modal-notebook" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm"><option value="">无</option></select></div>
-                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">范围</label><select id="task-modal-range-select" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm"><option value="">自定义</option></select><input id="task-modal-range-custom" class="w-full mt-1 p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" placeholder="或手动输入" /></div>
-                <div class="flex gap-2 pt-2"><button id="task-modal-cancel" class="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition">取消</button><button id="task-modal-save" class="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition">保存</button></div>
+                <input type="hidden" id="task-modal-date" />
+                <input type="hidden" id="task-modal-index" value="-1" />
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">标签</label>
+                    <input id="task-modal-tag" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" placeholder="如：行测-资料分析" list="tag-suggestions" />
+                    <datalist id="tag-suggestions">
+                        <option value="行测-资料分析"><option value="申论"><option value="常识时政"><option value="复盘"><option value="行测-言语理解"><option value="行测-判断推理"><option value="行测-数量关系">
+                    </datalist>
+                    <div class="flex flex-wrap gap-1 mt-1.5">
+                        <span class="text-xs text-gray-400 dark:text-gray-500">快捷：</span>
+                        <button type="button" class="tag-quick-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-tag="行测-资料分析">资料分析</button>
+                        <button type="button" class="tag-quick-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-tag="申论">申论</button>
+                        <button type="button" class="tag-quick-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-tag="常识时政">常识</button>
+                        <button type="button" class="tag-quick-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-tag="复盘">复盘</button>
+                        <button type="button" class="tag-quick-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-tag="行测-言语理解">言语</button>
+                        <button type="button" class="tag-quick-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-tag="行测-判断推理">判断</button>
+                        <button type="button" class="tag-quick-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-tag="行测-数量关系">数量</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">任务内容</label>
+                    <textarea id="task-modal-content" rows="3" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">目标（可选）</label>
+                    <input id="task-modal-goal" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">优先级</label>
+                    <select id="task-modal-priority" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm">
+                        <option value="low">低</option>
+                        <option value="medium" selected>中</option>
+                        <option value="high">高</option>
+                        <option value="urgent">紧急</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">关联题本</label>
+                    <select id="task-modal-notebook" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm"><option value="">无</option></select>
+                    <div id="recent-notebooks-container" class="flex flex-wrap gap-1 mt-1.5">
+                        <span class="text-xs text-gray-400 dark:text-gray-500">最近：</span>
+                        <span id="recent-notebook-list" class="flex flex-wrap gap-1"></span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">范围</label>
+                    <select id="task-modal-range-select" class="w-full p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm"><option value="">自定义</option></select>
+                    <input id="task-modal-range-custom" class="w-full mt-1 p-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-darkcard text-sm" placeholder="或手动输入" />
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button id="task-modal-cancel" class="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition">取消</button>
+                    <button id="task-modal-save" class="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition">保存 <span class="text-xs opacity-60">(Ctrl+Enter)</span></button>
+                </div>
             </div>
         </div>
     </div>
@@ -251,12 +282,12 @@
 
     <script>
         // ====================================================================
-        //  🚀 完整版 - 驾驶舱升级 + 成就系统 + 热力图 + 周报 + UI优化
+        //  🚀 完整版 - 修复倒计时刷新 & 驾驶舱完成判断
         // ====================================================================
         (function() {
             'use strict';
 
-            const STORAGE_KEY = 'gongkao_app_v10';
+            const STORAGE_KEY = 'gongkao_app_v11';
             const AUTO_BACKUP_KEY = 'gongkao_auto_backup_time';
 
             // ---------- 工具 ----------
@@ -315,6 +346,14 @@
                 chartReason = null,
                 chartReasonPie = null,
                 chartHeatmap = null;
+
+            // 筛选状态
+            let filterTag = '';
+            let filterPriority = '';
+            let filterKeyword = '';
+
+            // 最近使用题本
+            let recentNotebooks = JSON.parse(localStorage.getItem('recent_notebooks') || '[]');
 
             // ---------- 数据规范化 ----------
             function normalizeTask(task) {
@@ -695,6 +734,21 @@
                         </div>
                     </div>
                     <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-3 mb-4 rounded-r text-sm text-yellow-800 dark:text-yellow-200" id="daily-tip"></div>
+                    <div class="filter-bar bg-white dark:bg-darkcard rounded-lg p-2 mb-3 shadow-sm">
+                        <select id="filter-tag" class="filter-select">
+                            <option value="">全部标签</option>
+                            ${getAllTags().map(t => `<option value="${t}">${t}</option>`).join('')}
+                        </select>
+                        <select id="filter-priority" class="filter-select">
+                            <option value="">全部优先级</option>
+                            <option value="low">低</option>
+                            <option value="medium">中</option>
+                            <option value="high">高</option>
+                            <option value="urgent">紧急</option>
+                        </select>
+                        <input type="text" id="filter-keyword" class="filter-input flex-1 min-w-[60px]" placeholder="搜索任务..." />
+                        <button id="filter-clear" class="filter-clear text-xs">清除</button>
+                    </div>
                     <div id="today-task-list" class="space-y-4"></div>
                     <div class="mt-6">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">今日备注</label>
@@ -718,10 +772,26 @@
                 document.getElementById('today-progress-label').textContent = `进度 ${percent}%`;
                 document.getElementById('today-progress-bar').style.width = `${percent}%`;
 
+                filterTag = document.getElementById('filter-tag').value;
+                filterPriority = document.getElementById('filter-priority').value;
+                filterKeyword = document.getElementById('filter-keyword').value.toLowerCase();
+
+                document.getElementById('filter-tag').addEventListener('change', renderToday);
+                document.getElementById('filter-priority').addEventListener('change', renderToday);
+                document.getElementById('filter-keyword').addEventListener('input', renderToday);
+                document.getElementById('filter-clear').addEventListener('click', function() {
+                    document.getElementById('filter-tag').value = '';
+                    document.getElementById('filter-priority').value = '';
+                    document.getElementById('filter-keyword').value = '';
+                    renderToday();
+                });
+
                 const listContainer = document.getElementById('today-task-list');
 
+                // 添加任务和快捷模板
                 const addWrapper = document.createElement('div');
                 addWrapper.className = 'flex items-center gap-2 mb-3';
+
                 const addBtn = document.createElement('button');
                 addBtn.className =
                     'add-task-btn flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg py-3 text-center cursor-pointer transition hover:border-primary hover:text-primary';
@@ -729,6 +799,24 @@
                     `<i class="fas fa-plus text-gray-400 mr-2"></i><span class="text-gray-500 dark:text-gray-400 text-sm">添加任务</span>`;
                 addBtn.addEventListener('click', () => openTaskModal(todayStr));
                 addWrapper.appendChild(addBtn);
+
+                const quickDropdown = document.createElement('div');
+                quickDropdown.className = 'quick-template-dropdown relative';
+                quickDropdown.innerHTML = `
+                    <button class="add-task-btn border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg py-3 px-3 cursor-pointer transition hover:border-primary hover:text-primary flex items-center gap-1">
+                        <i class="fas fa-bolt text-gray-400"></i>
+                        <span class="text-gray-500 dark:text-gray-400 text-sm hidden sm:inline">快速</span>
+                    </button>
+                    <div class="quick-template-dropdown-content">
+                        <button data-template="资料分析 5题">📊 资料分析 5题</button>
+                        <button data-template="资料分析 10题">📊 资料分析 10题</button>
+                        <button data-template="申论概括 1道">📝 申论概括 1道</button>
+                        <button data-template="申论分析 1道">📝 申论分析 1道</button>
+                        <button data-template="常识时政 10题">🌍 常识时政 10题</button>
+                        <button data-template="复盘错题">🔄 复盘错题</button>
+                    </div>
+                `;
+                addWrapper.appendChild(quickDropdown);
 
                 const templateBtn = document.createElement('button');
                 templateBtn.className =
@@ -738,7 +826,34 @@
                 templateBtn.title = '从模板添加任务';
                 templateBtn.addEventListener('click', () => openTemplateModal(todayStr));
                 addWrapper.appendChild(templateBtn);
+
                 listContainer.appendChild(addWrapper);
+
+                quickDropdown.querySelectorAll('[data-template]').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const template = this.dataset.template;
+                        const parts = template.split(' ');
+                        const tag = parts[0];
+                        const content = parts.slice(1).join(' ');
+                        if (!state.tasks[todayStr]) state.tasks[todayStr] = { tip: '', tasks: [], note: '' };
+                        state.tasks[todayStr].tasks.push({
+                            tag: tag,
+                            content: content,
+                            goal: '',
+                            done: false,
+                            priority: 'medium',
+                            notebookId: null,
+                            range: '',
+                            correct: 0,
+                            wrong: 0,
+                            wrongReasonsCount: { K: 0, J: 0, S: 0 }
+                        });
+                        saveState();
+                        renderToday();
+                        showToast(`快速添加: ${tag} - ${content}`, 'success');
+                    });
+                });
 
                 if (!dayData.tasks || dayData.tasks.length === 0) {
                     const empty = document.createElement('div');
@@ -749,18 +864,25 @@
                     return;
                 }
 
-                const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
-                const sorted = [...dayData.tasks];
-                sorted.sort((a, b) => {
-                    if (a.done !== b.done) return a.done ? 1 : -1;
-                    return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
-                });
-                sorted.forEach((task, idx) => {
-                    task._index = dayData.tasks.indexOf(task);
-                });
+                let filtered = [...dayData.tasks];
+                if (filterTag) filtered = filtered.filter(t => t.tag === filterTag);
+                if (filterPriority) filtered = filtered.filter(t => t.priority === filterPriority);
+                if (filterKeyword) filtered = filtered.filter(t => t.content.toLowerCase().includes(filterKeyword) || t.tag
+                    .toLowerCase().includes(filterKeyword));
+
+                if (filtered.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'text-center text-gray-400 dark:text-gray-500 text-sm py-6';
+                    empty.textContent = '没有匹配的任务，试试调整筛选条件';
+                    listContainer.appendChild(empty);
+                    bindTodayEvents();
+                    return;
+                }
 
                 const groups = {};
-                sorted.forEach(task => {
+                filtered.forEach(task => {
+                    const idx = dayData.tasks.indexOf(task);
+                    task._index = idx;
                     if (!groups[task.tag]) groups[task.tag] = [];
                     groups[task.tag].push(task);
                 });
@@ -769,9 +891,13 @@
 
                 for (const [tag, tasks] of Object.entries(groups)) {
                     const tagDiv = document.createElement('div');
-                    const priorityClass = tasks[0]?.priority === 'urgent' ? 'priority-urgent' :
-                        tasks[0]?.priority === 'high' ? 'priority-high' :
-                        tasks[0]?.priority === 'medium' ? 'priority-medium' : 'priority-low';
+                    const hasUrgent = tasks.some(t => t.priority === 'urgent');
+                    const hasHigh = tasks.some(t => t.priority === 'high');
+                    const hasMedium = tasks.some(t => t.priority === 'medium');
+                    let priorityClass = 'priority-low';
+                    if (hasUrgent) priorityClass = 'priority-urgent';
+                    else if (hasHigh) priorityClass = 'priority-high';
+                    else if (hasMedium) priorityClass = 'priority-medium';
                     tagDiv.className =
                         `bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 border-l-4 border-primary ${priorityClass}`;
 
@@ -780,133 +906,66 @@
                     const labelMap = { low: '低', medium: '中', high: '高', urgent: '紧急' };
                     const colorMap = { low: 'text-gray-400', medium: 'text-yellow-500', high: 'text-red-500',
                     urgent: 'text-purple-500' };
-                    const pLabel = tasks[0]?.priority || 'medium';
+                    const pLabel = hasUrgent ? 'urgent' : hasHigh ? 'high' : hasMedium ? 'medium' : 'low';
                     tagTitle.innerHTML =
                         `<span class="w-2 h-2 rounded-full bg-primary mr-2"></span>${tag} <span class="ml-2 text-xs ${colorMap[pLabel]}">${labelMap[pLabel]}</span>`;
                     tagDiv.appendChild(tagTitle);
 
-                    const taskWrapper = document.createElement('div');
-                    taskWrapper.className = 'task-group-sortable';
+                    const undone = tasks.filter(t => !t.done);
+                    const doneTasks = tasks.filter(t => t.done);
 
-                    tasks.forEach(task => {
-                        const idx = task._index;
-                        const item = document.createElement('div');
-                        item.className =
-                            'mb-4 last:mb-0 task-item group p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50';
-                        item.dataset.index = idx;
+                    const undoneWrapper = document.createElement('div');
+                    undoneWrapper.className = 'task-group-sortable';
 
-                        const checkWrapper = document.createElement('label');
-                        checkWrapper.className = 'flex items-start gap-3 cursor-pointer';
-
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        checkbox.className =
-                            'mt-1 w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary cursor-pointer flex-shrink-0';
-                        checkbox.checked = task.done;
-                        checkbox.onchange = (e) => {
-                            task.done = e.target.checked;
-                            saveState();
-                            renderToday();
-                            if (currentView === 'view-calendar') renderCalendar();
-                            if (currentView === 'view-cockpit') renderCockpit();
-                        };
-
-                        const contentDiv = document.createElement('div');
-                        contentDiv.className = 'flex-1 text-sm text-gray-700 dark:text-gray-300';
-                        if (task.done) contentDiv.classList.add('line-through', 'text-gray-400');
-                        contentDiv.textContent = task.content;
-                        if (task.goal) {
-                            const goalSpan = document.createElement('div');
-                            goalSpan.className = 'text-xs text-blue-500 dark:text-blue-400 mt-1 font-medium';
-                            goalSpan.textContent = `目标: ${task.goal}`;
-                            contentDiv.appendChild(goalSpan);
-                        }
-                        if (task.notebookId) {
-                            const nb = state.notebooks.find(n => n.id === task.notebookId);
-                            if (nb) {
-                                const nbSpan = document.createElement('div');
-                                nbSpan.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1';
-                                nbSpan.textContent = `📖 ${nb.name}${task.range ? ' · '+task.range : ''}`;
-                                contentDiv.appendChild(nbSpan);
-                            }
-                        }
-                        if (task.correct > 0 || task.wrong > 0) {
-                            const scoreDiv = document.createElement('div');
-                            scoreDiv.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2 flex-wrap';
-                            const totalQ = task.correct + task.wrong;
-                            const rate = totalQ > 0 ? Math.round((task.correct / totalQ) * 100) : 0;
-                            let parts = [`✅${task.correct}`, `❌${task.wrong}`, `正确率${rate}%`];
-                            const r = task.wrongReasonsCount || { K: 0, J: 0, S: 0 };
-                            if (r.K || r.J || r.S) parts.push(`错因: K${r.K} J${r.J} S${r.S}`);
-                            scoreDiv.textContent = parts.join('  ');
-                            contentDiv.appendChild(scoreDiv);
-                        }
-
-                        checkWrapper.appendChild(checkbox);
-                        checkWrapper.appendChild(contentDiv);
-                        item.appendChild(checkWrapper);
-
-                        const actionBar = document.createElement('div');
-                        actionBar.className = 'flex justify-end gap-2 mt-1';
-
-                        const errorBtn = document.createElement('button');
-                        errorBtn.className =
-                            'task-action-btn text-gray-400 hover:text-purple-500 text-xs transition';
-                        errorBtn.innerHTML = '<i class="fas fa-pencil-alt"></i> 错题';
-                        errorBtn.title = '记录错题';
-                        errorBtn.onclick = (e) => { e.stopPropagation();
-                            openErrorModal(todayStr, idx); };
-
-                        const scoreBtn = document.createElement('button');
-                        scoreBtn.className =
-                            'task-action-btn text-gray-400 hover:text-green-500 text-xs transition';
-                        scoreBtn.innerHTML = '<i class="fas fa-chart-bar"></i> 成绩';
-                        scoreBtn.title = '记录成绩';
-                        scoreBtn.onclick = (e) => { e.stopPropagation();
-                            openScoreModal(todayStr, idx); };
-
-                        const editBtn = document.createElement('button');
-                        editBtn.className =
-                        'task-action-btn text-gray-400 hover:text-blue-500 text-xs transition';
-                        editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
-                        editBtn.onclick = (e) => { e.stopPropagation();
-                            openTaskModal(todayStr, idx); };
-
-                        const deleteBtn = document.createElement('button');
-                        deleteBtn.className =
-                            'task-action-btn text-gray-400 hover:text-red-500 text-xs transition';
-                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
-                        deleteBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            if (confirm('确定删除此任务？')) {
-                                dayData.tasks.splice(idx, 1);
-                                saveState();
-                                renderToday();
-                                if (currentView === 'view-calendar') renderCalendar();
-                            }
-                        };
-
-                        actionBar.appendChild(errorBtn);
-                        actionBar.appendChild(scoreBtn);
-                        actionBar.appendChild(editBtn);
-                        actionBar.appendChild(deleteBtn);
-                        item.appendChild(actionBar);
-
-                        taskWrapper.appendChild(item);
+                    undone.forEach(task => {
+                        const item = createTaskItem(task, todayStr, dayData);
+                        undoneWrapper.appendChild(item);
                     });
 
-                    tagDiv.appendChild(taskWrapper);
-                    fragment.appendChild(tagDiv);
+                    tagDiv.appendChild(undoneWrapper);
 
+                    if (doneTasks.length > 0) {
+                        const doneToggle = document.createElement('div');
+                        doneToggle.className =
+                            'task-done-toggle flex items-center gap-1 text-xs text-gray-400 mt-2 cursor-pointer';
+                        doneToggle.innerHTML =
+                            `<i class="fas fa-chevron-down transition-transform"></i> 已完成 (${doneTasks.length})`;
+                        doneToggle.addEventListener('click', function() {
+                            this.classList.toggle('open');
+                            const wrapper = this.nextElementSibling;
+                            wrapper.classList.toggle('open');
+                        });
+                        tagDiv.appendChild(doneToggle);
+
+                        const doneWrapper = document.createElement('div');
+                        doneWrapper.className = 'task-done-wrapper';
+                        doneTasks.forEach(task => {
+                            const item = createTaskItem(task, todayStr, dayData);
+                            item.style.opacity = '0.6';
+                            item.style.paddingLeft = '20px';
+                            item.style.fontSize = '0.9em';
+                            doneWrapper.appendChild(item);
+                        });
+                        tagDiv.appendChild(doneWrapper);
+                    }
+
+                    fragment.appendChild(tagDiv);
+                }
+
+                listContainer.appendChild(fragment);
+                bindTodayEvents();
+
+                document.querySelectorAll('.task-group-sortable').forEach(wrapper => {
                     if (typeof Sortable !== 'undefined') {
-                        new Sortable(taskWrapper, {
+                        new Sortable(wrapper, {
                             animation: 150,
                             handle: '.task-item',
-                            onEnd: () => {
-                                const items = taskWrapper.querySelectorAll('.task-item');
+                            onEnd: function() {
+                                const tag = this.el.closest('.bg-white').querySelector('h3').textContent
+                                    .trim();
+                                const items = this.el.querySelectorAll('.task-item');
                                 const newOrder = [];
                                 items.forEach(el => newOrder.push(parseInt(el.dataset.index)));
-                                const tag = tagDiv.querySelector('h3').textContent.trim();
                                 const tasksInGroup = dayData.tasks.filter(t => t.tag === tag);
                                 const sorted = newOrder.map(idx => dayData.tasks[idx]);
                                 const other = dayData.tasks.filter(t => t.tag !== tag);
@@ -916,10 +975,119 @@
                             }
                         });
                     }
+                });
+            }
+
+            function createTaskItem(task, todayStr, dayData) {
+                const idx = task._index;
+                const item = document.createElement('div');
+                item.className = 'mb-4 last:mb-0 task-item group p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50';
+                item.dataset.index = idx;
+
+                const checkWrapper = document.createElement('label');
+                checkWrapper.className = 'flex items-start gap-3 cursor-pointer';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className =
+                    'mt-1 w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary cursor-pointer flex-shrink-0';
+                checkbox.checked = task.done;
+                checkbox.onchange = (e) => {
+                    task.done = e.target.checked;
+                    saveState();
+                    renderToday();
+                    if (currentView === 'view-calendar') renderCalendar();
+                    if (currentView === 'view-cockpit') renderCockpit();
+                };
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'flex-1 text-sm text-gray-700 dark:text-gray-300';
+                if (task.done) contentDiv.classList.add('line-through', 'text-gray-400');
+                contentDiv.textContent = task.content;
+                if (task.goal) {
+                    const goalSpan = document.createElement('div');
+                    goalSpan.className = 'text-xs text-blue-500 dark:text-blue-400 mt-1 font-medium';
+                    goalSpan.textContent = `目标: ${task.goal}`;
+                    contentDiv.appendChild(goalSpan);
+                }
+                if (task.notebookId) {
+                    const nb = state.notebooks.find(n => n.id === task.notebookId);
+                    if (nb) {
+                        const nbSpan = document.createElement('div');
+                        nbSpan.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1';
+                        nbSpan.textContent = `📖 ${nb.name}${task.range ? ' · '+task.range : ''}`;
+                        contentDiv.appendChild(nbSpan);
+                    }
+                }
+                if (task.correct > 0 || task.wrong > 0) {
+                    const scoreDiv = document.createElement('div');
+                    scoreDiv.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2 flex-wrap';
+                    const totalQ = task.correct + task.wrong;
+                    const rate = totalQ > 0 ? Math.round((task.correct / totalQ) * 100) : 0;
+                    let parts = [`✅${task.correct}`, `❌${task.wrong}`, `正确率${rate}%`];
+                    const r = task.wrongReasonsCount || { K: 0, J: 0, S: 0 };
+                    if (r.K || r.J || r.S) parts.push(`错因: K${r.K} J${r.J} S${r.S}`);
+                    scoreDiv.textContent = parts.join('  ');
+                    contentDiv.appendChild(scoreDiv);
                 }
 
-                listContainer.appendChild(fragment);
-                bindTodayEvents();
+                checkWrapper.appendChild(checkbox);
+                checkWrapper.appendChild(contentDiv);
+                item.appendChild(checkWrapper);
+
+                const actionBar = document.createElement('div');
+                actionBar.className = 'flex justify-end gap-2 mt-1';
+
+                const errorBtn = document.createElement('button');
+                errorBtn.className = 'task-action-btn text-gray-400 hover:text-purple-500 text-xs transition';
+                errorBtn.innerHTML = '<i class="fas fa-pencil-alt"></i> 错题';
+                errorBtn.title = '记录错题';
+                errorBtn.onclick = (e) => { e.stopPropagation();
+                    openErrorModal(todayStr, idx); };
+
+                const scoreBtn = document.createElement('button');
+                scoreBtn.className = 'task-action-btn text-gray-400 hover:text-green-500 text-xs transition';
+                scoreBtn.innerHTML = '<i class="fas fa-chart-bar"></i> 成绩';
+                scoreBtn.title = '记录成绩';
+                scoreBtn.onclick = (e) => { e.stopPropagation();
+                    openScoreModal(todayStr, idx); };
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'task-action-btn text-gray-400 hover:text-blue-500 text-xs transition';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑';
+                editBtn.onclick = (e) => { e.stopPropagation();
+                    openTaskModal(todayStr, idx); };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'task-action-btn text-gray-400 hover:text-red-500 text-xs transition';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm('确定删除此任务？')) {
+                        dayData.tasks.splice(idx, 1);
+                        saveState();
+                        renderToday();
+                        if (currentView === 'view-calendar') renderCalendar();
+                    }
+                };
+
+                actionBar.appendChild(errorBtn);
+                actionBar.appendChild(scoreBtn);
+                actionBar.appendChild(editBtn);
+                actionBar.appendChild(deleteBtn);
+                item.appendChild(actionBar);
+
+                return item;
+            }
+
+            function getAllTags() {
+                const tags = new Set();
+                for (const date in state.tasks) {
+                    if (state.tasks[date].tasks) {
+                        state.tasks[date].tasks.forEach(t => tags.add(t.tag));
+                    }
+                }
+                return Array.from(tags).sort();
             }
 
             function bindTodayEvents() {
@@ -1053,6 +1221,9 @@
 
             // ---------- 驾驶舱 ----------
             function renderCockpit() {
+                // 重新计算完成天数，确保准确
+                updateStatistics();
+
                 const container = document.getElementById('view-cockpit');
                 if (!container) return;
                 const totalDays = getTotalDays();
@@ -1233,15 +1404,11 @@
                 return result.sort((a, b) => b.pct - a.pct);
             }
 
-            // ---------- 渲染各科进度 ----------
             function renderSubjectProgress() {
                 const container = document.getElementById('subject-progress-container');
                 if (!container) return;
                 const data = calculateSubjectProgress();
-                if (data.length === 0) {
-                    container.innerHTML = '<div class="text-xs text-gray-400">暂无数据</div>';
-                    return;
-                }
+                if (data.length === 0) { container.innerHTML = '<div class="text-xs text-gray-400">暂无数据</div>'; return; }
                 let html = '';
                 data.forEach(item => {
                     const color = item.pct >= 80 ? 'bg-green-500' : item.pct >= 50 ? 'bg-blue-500' : 'bg-yellow-500';
@@ -1260,7 +1427,6 @@
                 container.innerHTML = html;
             }
 
-            // ---------- 渲染阶段进度 ----------
             function renderStageProgress() {
                 const container = document.getElementById('stage-progress-container');
                 if (!container) return;
@@ -1293,7 +1459,7 @@
                 container.innerHTML = html;
             }
 
-            // ---------- 图表：科目分布 ----------
+            // ---------- 图表函数 ----------
             function renderSubjectChart() {
                 const dom = document.getElementById('chart-subject');
                 if (!dom) return;
@@ -1328,7 +1494,6 @@
                 chartSubject.resize();
             }
 
-            // ---------- 图表：错因分布堆叠 ----------
             function renderReasonChart() {
                 const dom = document.getElementById('chart-reason');
                 if (!dom) return;
@@ -1371,7 +1536,6 @@
                 chartReason.resize();
             }
 
-            // ---------- 图表：错因环形 ----------
             function renderReasonPieChart() {
                 const dom = document.getElementById('chart-reason-pie');
                 if (!dom) return;
@@ -1417,7 +1581,6 @@
                 chartReasonPie.resize();
             }
 
-            // ---------- 图表：热力图 ----------
             function renderHeatmapChart() {
                 const dom = document.getElementById('chart-heatmap');
                 if (!dom) return;
@@ -1468,7 +1631,6 @@
                 chartHeatmap.resize();
             }
 
-            // ---------- 图表：每日完成率 ----------
             function renderDailyChart() {
                 const dom = document.getElementById('chart-daily');
                 if (!dom) return;
@@ -1499,7 +1661,6 @@
                 chartDaily.resize();
             }
 
-            // ---------- 图表：错题趋势 ----------
             function renderErrorChart() {
                 const dom = document.getElementById('chart-error');
                 if (!dom) return;
@@ -1523,7 +1684,6 @@
                 chartError.resize();
             }
 
-            // ---------- 图表：阶段分析 ----------
             function renderStageChart() {
                 const dom = document.getElementById('chart-stage');
                 if (!dom) return;
@@ -1561,7 +1721,6 @@
                 chartStage.resize();
             }
 
-            // ---------- 渲染成就 ----------
             function renderBadges() {
                 const grid = document.getElementById('badge-grid');
                 if (!grid) return;
@@ -1855,6 +2014,13 @@
                     select.appendChild(opt);
                 });
                 updateRangeSelect();
+                renderRecentNotebooks();
+
+                document.querySelectorAll('.tag-quick-btn').forEach(btn => {
+                    btn.onclick = function() {
+                        document.getElementById('task-modal-tag').value = this.dataset.tag;
+                    };
+                });
 
                 if (index !== undefined && index >= 0) {
                     const task = state.tasks[dateStr]?.tasks[index];
@@ -1900,6 +2066,16 @@
                     document.getElementById('task-modal-range-custom').value = '';
                 }
                 modal.classList.remove('hidden');
+
+                const saveBtn = document.getElementById('task-modal-save');
+                const contentArea = document.getElementById('task-modal-content');
+                const handler = function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        saveBtn.click();
+                    }
+                };
+                contentArea.addEventListener('keydown', handler);
+                modal._keyHandler = handler;
             }
 
             function updateRangeSelect() {
@@ -1947,10 +2123,44 @@
                     state.tasks[dateStr].tasks.push(taskObj);
                     showToast('任务已添加', 'success');
                 }
+                if (notebookId) updateRecentNotebooks(notebookId);
                 saveState();
                 closeTaskModal();
                 renderToday();
                 if (currentView === 'view-calendar') renderCalendar();
+            }
+
+            function updateRecentNotebooks(notebookId) {
+                if (!notebookId) return;
+                recentNotebooks = recentNotebooks.filter(id => id !== notebookId);
+                recentNotebooks.unshift(notebookId);
+                if (recentNotebooks.length > 5) recentNotebooks.pop();
+                localStorage.setItem('recent_notebooks', JSON.stringify(recentNotebooks));
+                renderRecentNotebooks();
+            }
+
+            function renderRecentNotebooks() {
+                const container = document.getElementById('recent-notebook-list');
+                if (!container) return;
+                container.innerHTML = '';
+                if (recentNotebooks.length === 0) {
+                    container.innerHTML = '<span class="text-xs text-gray-400">无</span>';
+                    return;
+                }
+                recentNotebooks.forEach(id => {
+                    const nb = state.notebooks.find(n => n.id === id);
+                    if (!nb) return;
+                    const btn = document.createElement('button');
+                    btn.className = 'text-xs bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded hover:bg-blue-100 dark:hover:bg-blue-800/50';
+                    btn.textContent = nb.name;
+                    btn.onclick = function() {
+                        const select = document.getElementById('task-modal-notebook');
+                        select.value = id;
+                        updateRangeSelect();
+                        updateRecentNotebooks(id);
+                    };
+                    container.appendChild(btn);
+                });
             }
 
             // ---------- 模板 ----------
@@ -2173,7 +2383,7 @@
                 updateRangeSelect();
             }
 
-            // ---------- 导出错题 ----------
+            // ---------- 导出 ----------
             function exportErrors() {
                 let lines = [];
                 state.notebooks.forEach(nb => {
@@ -2201,7 +2411,6 @@
                 showToast('错题已导出', 'success');
             }
 
-            // ---------- 导出今日计划 ----------
             function exportTodayPlan() {
                 const todayStr = getDateString(new Date());
                 const dayData = state.tasks[todayStr];
@@ -2236,7 +2445,6 @@
                 showToast('导出成功', 'success');
             }
 
-            // ---------- Excel ----------
             function exportExcel() {
                 let rows = [
                     ['日期', '标签', '内容', '目标', '完成', '优先级', '正确', '错误', '题本', '范围']
@@ -2278,7 +2486,16 @@
                 showToast('Excel数据已导出', 'success');
             }
 
-            // ---------- 导入 ----------
+            function exportData() {
+                const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `gongkao_backup_${getDateString(new Date())}.json`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+                showToast('数据导出成功', 'success');
+            }
+
             function importData(e) {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -2339,18 +2556,6 @@
                 e.target.value = '';
             }
 
-            // ---------- 导出 JSON ----------
-            function exportData() {
-                const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `gongkao_backup_${getDateString(new Date())}.json`;
-                a.click();
-                URL.revokeObjectURL(a.href);
-                showToast('数据导出成功', 'success');
-            }
-
-            // ---------- 重置 ----------
             function resetData() {
                 if (confirm('确定重置所有数据？此操作不可恢复！')) {
                     localStorage.removeItem(STORAGE_KEY);
@@ -2358,7 +2563,7 @@
                 }
             }
 
-            // ---------- 保存日期 ----------
+            // ---------- 日期、考试、倒计时 ----------
             function saveDates() {
                 const start = document.getElementById('settings-start-date').value;
                 const end = document.getElementById('settings-end-date').value;
@@ -2375,7 +2580,7 @@
                 showToast('日期已更新，任务已累积', 'success');
             }
 
-            // ---------- 倒计时渲染（折叠） ----------
+            // ---------- 倒计时渲染 + 刷新 ----------
             function renderCountdowns() {
                 const container = document.getElementById('countdown-container');
                 const preview = document.getElementById('countdown-preview');
@@ -2390,7 +2595,6 @@
                     container.appendChild(div);
                     return;
                 }
-                // 显示第一个考试预览
                 const first = state.exams[0];
                 const diff = Math.ceil((new Date(first.date) - today) / (1000 * 3600 * 24));
                 preview.textContent = `${first.name} 还有 ${diff} 天`;
@@ -2407,7 +2611,6 @@
                 });
             }
 
-            // 倒计时折叠切换
             function setupCountdownToggle() {
                 const toggle = document.getElementById('countdown-toggle');
                 const body = document.getElementById('countdown-body');
@@ -2415,13 +2618,18 @@
                 toggle.addEventListener('click', function() {
                     this.classList.toggle('open');
                     body.classList.toggle('open');
+                    // 每次展开时刷新倒计时内容
+                    if (body.classList.contains('open')) {
+                        renderCountdowns();
+                    }
                 });
                 // 默认展开
                 toggle.classList.add('open');
                 body.classList.add('open');
+                // 初始渲染
+                renderCountdowns();
             }
 
-            // ---------- 界面设置 ----------
             function updateSettingsUI() {
                 document.getElementById('settings-start-date').value = state.startDate;
                 document.getElementById('settings-end-date').value = state.endDate;
@@ -2500,17 +2708,14 @@
                 applyTheme();
                 checkRollover();
                 setupAutoBackup();
-                setupCountdownToggle();
+                setupCountdownToggle(); // 会调用 renderCountdowns 并绑定展开刷新
 
                 switchView('view-today');
 
-                // 导航
                 document.querySelectorAll('.nav-btn').forEach(btn => {
                     btn.addEventListener('click', () => switchView(btn.dataset.target));
                 });
-                // 主题
                 document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-                // 设置
                 document.getElementById('settings-btn').addEventListener('click', () => {
                     document.getElementById('settings-modal').classList.remove('hidden');
                     updateSettingsUI();
@@ -2518,7 +2723,6 @@
                 document.getElementById('close-settings').addEventListener('click', () => {
                     document.getElementById('settings-modal').classList.add('hidden');
                 });
-                // 设置事件
                 document.getElementById('save-dates-btn').addEventListener('click', saveDates);
                 document.getElementById('add-exam-btn').addEventListener('click', addExam);
                 document.getElementById('export-btn').addEventListener('click', exportData);
@@ -2528,7 +2732,6 @@
                 document.getElementById('reset-btn').addEventListener('click', resetData);
                 document.getElementById('export-excel-btn').addEventListener('click', exportExcel);
 
-                // 任务模态框
                 document.getElementById('close-task-modal').addEventListener('click', closeTaskModal);
                 document.getElementById('task-modal-cancel').addEventListener('click', closeTaskModal);
                 document.getElementById('task-modal-save').addEventListener('click', saveTaskFromModal);
@@ -2539,26 +2742,25 @@
                     if (e.key === 'Escape') closeTaskModal();
                 });
 
-                // 模板
                 document.getElementById('close-template-modal').addEventListener('click', closeTemplateModal);
                 document.getElementById('template-modal').addEventListener('click', (e) => {
                     if (e.target === e.currentTarget) closeTemplateModal();
                 });
-                // 成绩
+
                 document.getElementById('close-score-modal').addEventListener('click', closeScoreModal);
                 document.getElementById('score-modal-cancel').addEventListener('click', closeScoreModal);
                 document.getElementById('score-modal-save').addEventListener('click', saveScore);
                 document.getElementById('score-modal').addEventListener('click', (e) => {
                     if (e.target === e.currentTarget) closeScoreModal();
                 });
-                // 错题
+
                 document.getElementById('close-error-modal').addEventListener('click', closeErrorModal);
                 document.getElementById('error-modal-cancel').addEventListener('click', closeErrorModal);
                 document.getElementById('error-modal-save').addEventListener('click', saveError);
                 document.getElementById('error-modal').addEventListener('click', (e) => {
                     if (e.target === e.currentTarget) closeErrorModal();
                 });
-                // 题本
+
                 document.getElementById('close-notebook-modal').addEventListener('click', closeNotebookModal);
                 document.getElementById('notebook-modal-cancel').addEventListener('click', closeNotebookModal);
                 document.getElementById('notebook-modal-save').addEventListener('click', saveNotebook);
@@ -2567,6 +2769,16 @@
                 });
                 document.getElementById('add-range-btn').addEventListener('click', () => addRangeInput('', 0));
                 document.getElementById('task-modal-notebook').addEventListener('change', updateRangeSelect);
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const modals = document.querySelectorAll('.modal-overlay:not(.hidden)');
+                        modals.forEach(m => {
+                            const closeBtn = m.querySelector('[id$="-modal"] .fa-times')?.closest('button');
+                            if (closeBtn) closeBtn.click();
+                        });
+                    }
+                });
 
                 let resizeTimer;
                 window.addEventListener('resize', () => {
