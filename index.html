@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>考公速览 · 今日冲刺</title>
+    <title>考公速览</title>
     <script defer src="https://cdn.tailwindcss.com">
     </script>
     <script>
@@ -55,6 +55,7 @@
     </script>
 
     <style>
+        /* 全部样式与之前相同，省略重复以节省篇幅，但实际代码中保留完整 */
         body.fa-fallback .fa-sun:before { content: "\2600"; }
         body.fa-fallback .fa-moon:before { content: "\263D"; }
         body.fa-fallback .fa-newspaper:before { content: "\1F4F0"; }
@@ -714,7 +715,7 @@
         .calendar-readonly-hint { font-size: 10px; color: var(--v18-muted); background: var(--v18-bg); padding: 2px 10px; border-radius: 99px; }
 
         .gacha-result-overlay { position: fixed; inset:0; background: rgba(0,0,0,.7); backdrop-filter: blur(6px); z-index:70; display:none; align-items:center; justify-content:center; animation:fadeIn .25s ease; }
-.gacha-result-overlay.show { display:flex; }
+        .gacha-result-overlay.show { display:flex; }
         .gacha-result-overlay .gacha-result-box { background: var(--v18-card); border-radius:28px; max-width:400px; width:90%; padding:28px 24px 24px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.5); animation:popIn .3s cubic-bezier(.175,.885,.32,1.275); position:relative; overflow:hidden; }
         .gacha-result-overlay .gacha-result-box:before { content:""; position:absolute; inset:0; background:radial-gradient(circle at 50% 0%, rgba(251,191,36,.08), transparent 70%); pointer-events:none; }
         .gacha-result-overlay .result-icon { font-size:56px; margin-bottom:6px; display:block; }
@@ -762,6 +763,15 @@
         .mode-hint { font-size: 10px; color: var(--v18-muted); margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: var(--v18-bg); border: 1px dashed var(--v18-border); line-height: 1.5; }
         .dark .mode-hint { background: #0a1120; border-color: #26364a; }
         .mode-hint strong { color: var(--v18-primary); }
+
+        /* === 通知开关样式 === */
+        .notification-toggle { display: flex; align-items: center; gap: 8px; }
+        .notification-toggle input[type="checkbox"] { width: 40px; height: 22px; appearance: none; background: #d1d5db; border-radius: 11px; outline: none; transition: background 0.2s; position: relative; cursor: pointer; }
+        .notification-toggle input[type="checkbox"]:checked { background: #3b82f6; }
+        .notification-toggle input[type="checkbox"]::after { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s; }
+        .notification-toggle input[type="checkbox"]:checked::after { transform: translateX(18px); }
+        .dark .notification-toggle input[type="checkbox"] { background: #4b5563; }
+        .dark .notification-toggle input[type="checkbox"]:checked { background: #3b82f6; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-darkbg dark:text-gray-100 h-screen flex flex-col overflow-hidden font-sans antialiased">
@@ -826,7 +836,7 @@
 
     <button id="fab-add" class="fab-add" aria-label="添加今日任务" title="添加今日任务"><i class="fas fa-plus"></i></button>
 
-    <!-- 设置模态框 -->
+    <!-- 设置模态框（新增通知开关） -->
     <div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end justify-center p-0 modal-overlay sheet-modal">
         <div class="bg-white dark:bg-darkcard w-full max-w-md shadow-2xl modal-content">
             <div class="modal-header">
@@ -841,6 +851,22 @@
                 </div>
             </div>
             <div class="modal-body space-y-3">
+                <!-- 通知开关 -->
+                <div class="modal-section">
+                    <div class="modal-section-title"><span><i class="fas fa-bell"></i> 浏览器通知</span><span class="modal-mini-hint">每日任务提醒</span></div>
+                    <div class="notification-toggle flex items-center justify-between">
+                        <span class="text-sm text-slate-600 dark:text-slate-300">启用每日提醒</span>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="notification-toggle" checked />
+                            <span class="text-xs text-slate-500 dark:text-slate-400" id="notification-status">已启用</span>
+                        </label>
+                    </div>
+                    <div class="mt-2 text-[10px] text-slate-400 leading-5">
+                        <i class="fas fa-info-circle"></i> 每天首次打开页面时，如果今日有未完成任务会发送浏览器通知。需授予通知权限。
+                        <button id="request-notification-perm" class="text-blue-500 underline ml-1">点击申请权限</button>
+                    </div>
+                </div>
+
                 <div class="modal-section">
                     <div class="modal-section-title"><span>⚡ 今日任务模式</span><span class="modal-mini-hint">只影响今天 · 手动切换</span></div>
                     <div class="mode-selector" id="study-mode-selector">
@@ -1032,7 +1058,7 @@
 
     <script>
         // ====================================================================
-        //  完整修复版 - 积分三类隔离 + 纯积分抽卡 + 商店正向激励 + 手动模式切换 + 丰富抽签buff
+        //  完整修复版 - 积分三类隔离 + 纯积分抽卡 + 商店正向激励 + 手动模式切换 + 丰富抽签buff + 性能优化 + 浏览器提醒 + 修复所有发现的bug
         // ====================================================================
         (function() {
             'use strict';
@@ -1105,8 +1131,10 @@
                 gachaHistory: [],
                 fortuneDrawn: null,
                 activeBuffs: {},
-                // === 新增：今日任务模式（手动切换） ===
-                studyMode: 'standard' // 'light' | 'standard' | 'heavy'
+                studyMode: 'standard',
+                notificationEnabled: true,
+                lastNotificationDate: null,
+                lastPenaltyCheckDate: null
             };
 
             let currentView = 'view-today';
@@ -1188,8 +1216,10 @@
                         if (!Array.isArray(state.gachaHistory)) state.gachaHistory = [];
                         if (!state.fortuneDrawn) state.fortuneDrawn = null;
                         if (!state.activeBuffs) state.activeBuffs = {};
-                        // 新增 studyMode
                         if (!['light', 'standard', 'heavy'].includes(state.studyMode)) state.studyMode = 'standard';
+                        if (typeof state.notificationEnabled !== 'boolean') state.notificationEnabled = true;
+                        if (!state.lastNotificationDate) state.lastNotificationDate = null;
+                        if (!state.lastPenaltyCheckDate) state.lastPenaltyCheckDate = null;
                     } else {
                         initDefaultData();
                     }
@@ -1244,6 +1274,9 @@
                 state.fortuneDrawn = null;
                 state.activeBuffs = {};
                 state.studyMode = 'standard';
+                state.notificationEnabled = true;
+                state.lastNotificationDate = null;
+                state.lastPenaltyCheckDate = null;
                 saveState();
             }
 
@@ -1325,11 +1358,7 @@
                         totalBonus += 20;
                         rewards.push('Lv.' + lv + ' 额外+20分');
                     }
-                    if (lv % 5 === 0) {
-                        state.rewards.push({ id: 'gacha_unified', name: '抽卡券', cost: 30, date: getDateString(
-                                new Date()), used: false });
-                        rewards.push('Lv.' + lv + ' 赠送抽卡券×1');
-                    }
+                    // 移除无效的抽卡券赠送
                 }
                 state.spendablePoints = (state.spendablePoints || 0) + totalBonus;
                 state.pointsHistory = state.pointsHistory || [];
@@ -1371,39 +1400,28 @@
                 return due;
             }
 
-            function addPointsForTask(task, isUrgent) {
-                const base = 10;
-                const urgentBonus = isUrgent ? 5 : 0;
-                const total = base + urgentBonus;
-                addSpendablePoints(total, '完成任务：' + (task.content || '').slice(0, 12));
-                addLevelPoints(total, '任务积分');
-                addAchievementPoints(1, '任务完成');
-                if (task.tag === '申论') {
-                    addSpendablePoints(3, '申论额外加成');
-                    addLevelPoints(3, '申论额外加成');
+            // ===== 清理过期 buff =====
+            function cleanExpiredBuffs() {
+                const today = getDateString(new Date());
+                if (!state.activeBuffs) state.activeBuffs = {};
+                for (const key in state.activeBuffs) {
+                    if (state.activeBuffs[key] !== today) {
+                        delete state.activeBuffs[key];
+                    }
                 }
-                saveState();
             }
 
-            function deductPoints(amount, reason) {
-                deductSpendablePoints(amount, reason);
-                state.penalties = state.penalties || [];
-                state.penalties.push({ date: getDateString(new Date()), amount, reason });
-                if (state.penalties.length > 30) state.penalties = state.penalties.slice(-30);
-                showToast(' ' + reason + ' -' + amount + '分', 'error');
-                saveState();
-            }
-
+            // ===== 惩罚检查（仅执行一次/天） =====
             function checkDailyPenalty() {
                 const today = getDateString(new Date());
+                if (state.lastPenaltyCheckDate === today) return;
+                state.lastPenaltyCheckDate = today;
+
                 const yesterday = addDays(today, -1);
                 const yDay = state.tasks[yesterday];
-                state.activeBuffs = state.activeBuffs || {};
-                const buffsToClear = ['focus_boost', 'fortune_boost', 'double_points', 'combo_guard',
-                    'task_half', 'extra_life', 'rest_day', 'music_day', 'extra_reward'
-                ];
-                buffsToClear.forEach(b => { if (state.activeBuffs[b] && state.activeBuffs[b] !== today) delete state
-                        .activeBuffs[b]; });
+
+                // 清理过期 buff 已移至 cleanExpiredBuffs，此处不再重复
+
                 if (yDay && yDay.tasks && yDay.tasks.length > 0) {
                     const undone = yDay.tasks.filter(t => !t.done);
                     const alreadyPenalized = state.penalties && state.penalties.some(p => p.date === yesterday);
@@ -1444,6 +1462,110 @@
                         saveState();
                     }
                 }
+                saveState();
+            }
+
+            function addPointsForTask(task, isUrgent) {
+                const base = 10;
+                const urgentBonus = isUrgent ? 5 : 0;
+                const total = base + urgentBonus;
+                addSpendablePoints(total, '完成任务：' + (task.content || '').slice(0, 12));
+                addLevelPoints(total, '任务积分');
+                addAchievementPoints(1, '任务完成');
+                if (task.tag === '申论') {
+                    addSpendablePoints(3, '申论额外加成');
+                    addLevelPoints(3, '申论额外加成');
+                }
+                // subject_boost
+                const today = getDateString(new Date());
+                if (state.activeBuffs && state.activeBuffs.subject_boost === today &&
+                    state.activeBuffs.subject_boost_subject &&
+                    task.tag === state.activeBuffs.subject_boost_subject) {
+                    addSpendablePoints(5, '幸运科目加成');
+                    addLevelPoints(5, '幸运科目加成');
+                }
+                saveState();
+            }
+
+            function deductPoints(amount, reason) {
+                deductSpendablePoints(amount, reason);
+                state.penalties = state.penalties || [];
+                state.penalties.push({ date: getDateString(new Date()), amount, reason });
+                if (state.penalties.length > 30) state.penalties = state.penalties.slice(-30);
+                showToast(' ' + reason + ' -' + amount + '分', 'error');
+                saveState();
+            }
+
+            // ===== 浏览器通知提醒 =====
+            function requestNotificationPermission() {
+                if (!('Notification' in window)) {
+                    showToast('此浏览器不支持桌面通知', 'error');
+                    return;
+                }
+                if (Notification.permission === 'granted') {
+                    showToast('通知权限已授予', 'success');
+                    return;
+                }
+                if (Notification.permission === 'denied') {
+                    showToast('通知权限已被拒绝，请到浏览器设置中开启', 'error');
+                    return;
+                }
+                Notification.requestPermission().then(perm => {
+                    if (perm === 'granted') {
+                        showToast('通知权限已授予！', 'success');
+                    } else {
+                        showToast('通知权限被拒绝，可在浏览器设置中重新开启', 'error');
+                    }
+                });
+            }
+
+            function sendDailyReminder() {
+                const today = getDateString(new Date());
+                if (!state.notificationEnabled) return;
+                if (state.lastNotificationDate === today) return;
+
+                const dayData = state.tasks[today];
+                if (!dayData || !dayData.tasks || dayData.tasks.length === 0) {
+                    state.lastNotificationDate = today;
+                    saveState();
+                    return;
+                }
+
+                const total = dayData.tasks.length;
+                const done = dayData.tasks.filter(t => t.done).length;
+                const undone = total - done;
+
+                if (!('Notification' in window) || Notification.permission !== 'granted') {
+                    state.lastNotificationDate = today;
+                    saveState();
+                    return;
+                }
+
+                let title, body;
+                if (undone === 0) {
+                    title = '🎉 今日任务全部完成！';
+                    body = `已完成 ${done} 项任务，继续保持！`;
+                } else {
+                    title = '📋 今日还有任务待完成';
+                    body = `已完成 ${done}/${total} 项，还剩 ${undone} 项未完成，加油！`;
+                }
+
+                try {
+                    const notification = new Notification(title, {
+                        body: body,
+                        icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%233b82f6"/%3E%3Ctext x="50" y="65" font-size="50" text-anchor="middle" fill="white"%3E📚%3C/text%3E%3C/svg%3E',
+                        requireInteraction: true
+                    });
+                    notification.onclick = function() {
+                        window.focus();
+                        notification.close();
+                    };
+                    setTimeout(() => notification.close(), 8000);
+                } catch (e) {
+                    console.warn('发送通知失败:', e);
+                }
+                state.lastNotificationDate = today;
+                saveState();
             }
 
             // ===== 抽卡系统 =====
@@ -1911,7 +2033,6 @@
             }
 
             function getAdaptiveStrategy(dayNum, todayStr) {
-                // 只基于最近3天完成率给出建议，不再自动调整任务量（由手动模式控制）
                 let rates = [];
                 for (let i = 1; i <= 3; i++) {
                     const d = addDays(todayStr, -i);
@@ -2207,7 +2328,6 @@
             }
             window.buildMaster118Plan = buildMaster118Plan;
 
-            // === 【修改】确保每天每个核心模块至少1个练习任务 ===
             function ensureAllModules(dayTasks, phase) {
                 const requiredModules = [
                     { tag: '行测-资料分析', content: phase === '筑基' ? '资料分析：刷题册1套（不限时）' :
@@ -2256,15 +2376,10 @@
                 return dayTasks;
             }
 
-            // === 【修改】基于手动模式调整任务量（不再自动判定） ===
             function adaptTasksToState(dayTasks, currentDate, todayStr) {
-                // 只有今天的任务应用模式
                 if (currentDate !== todayStr) return dayTasks;
-
                 const mode = state.studyMode || 'standard';
-
                 if (mode === 'light') {
-                    // 轻量：只保留紧急+高优先级，最多4项，确保资料+申论
                     let filtered = dayTasks.filter(t => t.priority === 'urgent' || t.priority === 'high');
                     const hasData = filtered.some(t => t.tag === '行测-资料分析');
                     const hasEssay = filtered.some(t => t.tag === '申论');
@@ -2280,7 +2395,6 @@
                         filtered = [dayTasks[0]];
                     }
                     if (filtered.length > 4) filtered = filtered.slice(0, 4);
-                    // 如果过滤后少于2项，从原任务中补足
                     if (filtered.length < 2 && dayTasks.length >= 2) {
                         const existingIds = new Set(filtered.map(t => t.id));
                         for (const t of dayTasks) {
@@ -2291,7 +2405,6 @@
                     }
                     return filtered;
                 } else if (mode === 'heavy') {
-                    // 加量：增加1-2个额外任务（薄弱模块）
                     const extraTasks = [];
                     const weakTags = ['行测-数量关系', '行测-判断推理', '行测-言语理解'];
                     const existingTags = new Set(dayTasks.map(t => t.tag));
@@ -2316,12 +2429,10 @@
                     }
                     return [...dayTasks, ...extraTasks];
                 } else {
-                    // 标准：保持原样
                     return dayTasks;
                 }
             }
 
-            // === 【修改】getStudyLoadMode 基于手动模式 ===
             function getStudyLoadMode() {
                 const p = getPlanPreferences();
                 const mode = state.studyMode || 'standard';
@@ -2360,8 +2471,6 @@
                         });
 
                         tasks = ensureAllModules(tasks, day.phase);
-
-                        // 传入当前日期和今天日期，只有今天应用模式
                         tasks = adaptTasksToState(tasks, day.date, todayStr);
 
                         state.tasks[day.date] = {
@@ -2621,8 +2730,6 @@
                 const dayNum = Math.max(1, diffDays(state.masterPlan?.startDate || state.startDate, todayStr) + 1);
                 const phase = (typeof getPhase111 === 'function') ? getPhase111(dayNum) : '筑基';
 
-                const adaptive = getAdaptiveStrategy(dayNum, todayStr);
-
                 const suggestions = [];
                 if (urgent) suggestions.push('<i class="fas fa-exclamation-circle" style="color:#ef4444;margin-right:3px"></i>有 ' +
                     urgent + ' 项紧急任务，优先处理');
@@ -2653,8 +2760,6 @@
                     (idx + 1) + '</span><div class="text-xs text-slate-600 dark:text-slate-200 leading-5">' + s +
                     '</div></div>'
                 ).join('');
-
-                const adaptiveHtml = ''; // 不再自动调整，保留建议但去除自动执行
 
                 return `
                     <div class="mobile-card mb-3 p-4">
@@ -2711,6 +2816,9 @@
 
             // ---------- 渲染：今日 ----------
             function renderToday() {
+                // 清理过期 buff
+                cleanExpiredBuffs();
+
                 const container = document.getElementById('view-today');
                 if (!container) return;
                 const todayStr = getDateString(new Date());
@@ -3323,11 +3431,9 @@
                             });
 
                             tasks = ensureAllModules(tasks, planDay.phase);
-                            // 传入今天日期，只有今天应用模式
                             tasks = adaptTasksToState(tasks, today, today);
 
                             const load = getStudyLoadMode();
-                            // 如果用户手动选的是轻量，但任务还很多，再减一次（adaptTasksToState已经处理过了，但以防万一）
                             if (state.studyMode === 'light' && tasks.length > 4) tasks = tasks.slice(0, 4);
                             if (profile.gap > 10 && !tasks.some(t => t.tag === '申论')) {
                                 tasks.push(normalizeTask({ tag: '申论', content: '申论小题练习1道',
@@ -3479,7 +3585,6 @@
             function renderCockpit() {
                 try {
                     updateStatistics();
-                    checkDailyPenalty();
                 } catch (e) { console.warn('[Cockpit] 更新统计失败:', e); }
 
                 const container = document.getElementById('view-cockpit');
@@ -4075,7 +4180,6 @@
             }
 
             // ========== 成长页 ==========
-            // === 【修改】丰富抽签buff，去除心理作用类，增加实际积极buff ===
             function generateFortune() {
                 const luckySubjects = ['资料分析', '言语理解', '判断推理', '申论', '数量关系', '常识时政'];
                 const luckyColors = ['蓝色', '绿色', '橙色', '紫色', '金色', '白色', '青色', '红色', '粉色'];
@@ -4098,7 +4202,7 @@
                 const ri = (arr) => arr[Math.floor(Math.random() * arr.length)];
                 const luck = 60 + Math.floor(Math.random() * 41);
 
-                // 实际积极buff列表（8种，全部为实际效果，无心理作用类）
+                // 只保留实际有效的buff
                 const buffTypes = [
                     { type: 'points_boost', label: '今日积分 ×1.5', desc: '今天所有任务积分加成1.5倍' },
                     { type: 'bonus_points', label: '立即 +20 分', desc: '好运直接到账，积分+20' },
@@ -4112,7 +4216,6 @@
                 ];
                 const buff = buffTypes[Math.floor(Math.random() * buffTypes.length)];
 
-                // 如果抽到 subject_boost，确定具体科目
                 let subjectForBuff = '';
                 if (buff.type === 'subject_boost') {
                     subjectForBuff = ri(luckySubjects);
@@ -4141,11 +4244,9 @@
                 const fortune = generateFortune();
                 state.activeBuffs = state.activeBuffs || {};
 
-                // 应用buff
                 if (fortune.buffType === 'points_boost') {
                     state.activeBuffs.fortune_boost = today;
                 } else if (fortune.buffType === 'bonus_points') {
-                    // 立即加20分
                     addSpendablePoints(20, '今日运势签：立即+20分');
                     addLevelPoints(20, '今日运势签：立即+20分');
                 } else if (fortune.buffType === 'subject_boost') {
@@ -4654,6 +4755,12 @@
                 if (modeEl) modeEl.textContent = index !== undefined && index >= 0 ? '编辑任务' : '新建任务';
                 if (dateEl) dateEl.textContent = dateStr === getDateString(new Date()) ? '今天' : dateStr;
 
+                // 如果是编辑模式，禁用日期输入
+                const dateInput = document.getElementById('task-modal-date');
+                if (dateInput) {
+                    dateInput.disabled = (index !== undefined && index >= 0);
+                }
+
                 document.querySelectorAll('.tag-quick-btn').forEach(btn => {
                     btn.onclick = function() {
                         document.getElementById('task-modal-tag').value = this.dataset.tag;
@@ -4693,6 +4800,9 @@
                 if (modal._keyHandler) { contentArea.removeEventListener('keydown', modal._keyHandler);
                     modal._keyHandler = null; }
                 modal.classList.add('hidden');
+                // 重新启用日期输入（如果被禁用）
+                const dateInput = document.getElementById('task-modal-date');
+                if (dateInput) dateInput.disabled = false;
             }
 
             function saveTaskFromModal() {
@@ -4908,6 +5018,9 @@
                         if (typeof payload.level !== 'number') payload.level = 1;
                         if (!payload.studyMode || !['light', 'standard', 'heavy'].includes(payload.studyMode))
                             payload.studyMode = 'standard';
+                        if (typeof payload.notificationEnabled !== 'boolean') payload.notificationEnabled = true;
+                        if (!payload.lastNotificationDate) payload.lastNotificationDate = null;
+                        if (!payload.lastPenaltyCheckDate) payload.lastPenaltyCheckDate = null;
 
                         state = deepMerge(state, payload);
                         delete state.notebooks;
@@ -5068,8 +5181,13 @@
                 set('settings-weak-tags', (prefs.weakTags || []).join(', '));
                 set('settings-mock-block', prefs.mockBlockMinutes || 90);
                 renderExamList();
-                // 更新模式选择器
                 updateModeSelectorUI();
+                const toggle = document.getElementById('notification-toggle');
+                const statusLabel = document.getElementById('notification-status');
+                if (toggle) {
+                    toggle.checked = state.notificationEnabled !== false;
+                    if (statusLabel) statusLabel.textContent = toggle.checked ? '已启用' : '已禁用';
+                }
             }
 
             // === 模式选择器UI ===
@@ -5095,15 +5213,12 @@
                 state.studyMode = mode;
                 saveState();
                 updateModeSelectorUI();
-                // 重新生成今日任务（只影响今天）
                 const today = getDateString(new Date());
                 if (state.tasks[today] && state.masterPlan) {
-                    // 重新应用计划到今日
                     const planArray = buildMaster118Plan(state.masterPlan.startDate || state.startDate);
                     const dayOffset = Math.max(0, diffDays(state.masterPlan.startDate || state.startDate, today));
                     const planDay = planArray[Math.min(dayOffset, PLAN_TOTAL_DAYS - 1)];
                     if (planDay) {
-                        // 保留非coachGenerated的任务（用户手动添加的）
                         const manualTasks = (state.tasks[today].tasks || []).filter(t => !t.coachGenerated && !t
                             .masterPlan);
                         let tasks = planDay.tasks.map(tpl => {
@@ -5118,7 +5233,6 @@
                         });
                         tasks = ensureAllModules(tasks, planDay.phase);
                         tasks = adaptTasksToState(tasks, today, today);
-                        // 合并手动任务（去重）
                         const existingIds = new Set(tasks.map(t => t.id));
                         manualTasks.forEach(t => {
                             if (!existingIds.has(t.id)) {
@@ -5189,21 +5303,60 @@
                 }
             }
 
-            // ---------- 初始化 ----------
+            // ========== 通知逻辑 ==========
+            function initNotification() {
+                if (!('Notification' in window)) {
+                    console.warn('此浏览器不支持桌面通知');
+                    return;
+                }
+                if (Notification.permission === 'default') {
+                    Notification.requestPermission().then(perm => {
+                        if (perm === 'granted') {
+                            console.log('通知权限已授予');
+                        } else {
+                            console.log('通知权限被拒绝');
+                        }
+                    });
+                }
+                setTimeout(() => {
+                    sendDailyReminder();
+                }, 2000);
+            }
+
+            // ---------- 初始化（性能优化版） ----------
             function init() {
                 document.addEventListener('click', (e) => { document.querySelectorAll(
                         '.quick-template-dropdown.open').forEach(el => { if (!el.contains(e.target)) el.classList
                             .remove('open'); }); });
+
                 loadState();
                 applyTheme();
+
                 checkRollover();
-                checkDailyPenalty();
-                setupAutoBackup();
+
+                setTimeout(() => {
+                    checkDailyPenalty();
+                    setupAutoBackup();
+                    initNotification();
+                }, 300);
+
                 setupCountdownToggle();
                 bindConfirmButtons();
-
                 renderToday();
-                switchView('view-today');
+
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                const todayView = document.getElementById('view-today');
+                if (todayView) todayView.classList.remove('hidden');
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    if (btn.dataset.target === 'view-today') {
+                        btn.classList.add('text-primary');
+                        btn.classList.remove('text-gray-400', 'dark:text-gray-500');
+                    } else {
+                        btn.classList.remove('text-primary');
+                        btn.classList.add('text-gray-400', 'dark:text-gray-500');
+                    }
+                });
+                currentView = 'view-today';
 
                 document.querySelectorAll('.nav-btn').forEach(btn => {
                     btn.addEventListener('click', () => switchView(btn.dataset.target));
@@ -5241,9 +5394,7 @@
                     nb.addEventListener('touchend', h, { passive: false });
                 })();
 
-
                 document.getElementById('close-template-modal')?.addEventListener('click', closeTemplateModal);
-
                 document.getElementById('template-modal')?.addEventListener('click', (e) => { if (e.target === e
                         .currentTarget) closeTemplateModal(); });
                 document.getElementById('task-modal')?.addEventListener('click', (e) => { if (e.target === e
@@ -5256,7 +5407,6 @@
                     document.getElementById('settings-modal')?.classList.add('hidden');
                 });
 
-                // === 模式选择器事件 ===
                 document.querySelectorAll('#study-mode-selector button').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const mode = this.dataset.mode;
@@ -5266,7 +5416,23 @@
                     });
                 });
 
-                // 暴露全局
+                const notifToggle = document.getElementById('notification-toggle');
+                const notifStatus = document.getElementById('notification-status');
+                if (notifToggle) {
+                    notifToggle.addEventListener('change', function() {
+                        state.notificationEnabled = this.checked;
+                        saveState();
+                        if (notifStatus) notifStatus.textContent = this.checked ? '已启用' : '已禁用';
+                        if (this.checked) {
+                            if (Notification.permission === 'default') {
+                                Notification.requestPermission();
+                            }
+                            setTimeout(sendDailyReminder, 1000);
+                        }
+                    });
+                }
+                document.getElementById('request-notification-perm')?.addEventListener('click', requestNotificationPermission);
+
                 window.redeemReward = redeemReward;
                 window.useReward = useReward;
                 window.addCustomReward = addCustomReward;
@@ -5293,8 +5459,8 @@
                 window.executeGachaSingle = executeGachaSingle;
                 window.executeGachaTen = executeGachaTen;
                 window.setStudyMode = setStudyMode;
+                window.requestNotificationPermission = requestNotificationPermission;
 
-                // 知识点折叠：事件委托
                 document.addEventListener('click', (e) => {
                     const tog = e.target.closest('.knowledge-toggle');
                     if (!tog || !tog.dataset.target) return;
@@ -5308,16 +5474,9 @@
                     }
                 });
 
-                console.log('[INIT] 应用已启动 · 手动模式切换 + 丰富抽签buff + 积分三类隔离');
+                console.log('[INIT] 应用已启动 · 性能优化 + 手动模式 + 丰富抽签buff + 浏览器通知 + 修复bug');
             }
 
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() { init(); });
-            } else {
-                init();
-            }
-
-            // 补充 addExam 函数（在 init 中引用）
             function addExam() {
                 const name = document.getElementById('new-exam-name').value.trim();
                 const date = document.getElementById('new-exam-date').value;
@@ -5356,9 +5515,14 @@
                 });
             }
 
-            // 确保 addExam 和 renderExamList 被暴露
             window.addExam = addExam;
             window.renderExamList = renderExamList;
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
 
         })();
     </script>
