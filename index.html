@@ -6,10 +6,149 @@
     <meta name="theme-color" content="#f8fafc" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>考公速览</title>
-    <script defer src="https://cdn.tailwindcss.com">
+    <title>考公速览 · 今日冲刺</title>
+
+    <!-- ===== 关键CSS内联：在Tailwind加载前保证基础布局 & 骨架屏 ===== -->
+    <style>
+        /* 基础重置 & 字体 */
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-text-size-adjust:100%;background:#f4f6fa}
+        body{background:#f4f6fa;color:#0f172a;min-height:100vh;overflow:hidden}
+        /* 启动骨架屏 */
+        #app-skeleton{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;background:#f4f6fa;transition:opacity .35s ease}
+        #app-skeleton.hidden{opacity:0;pointer-events:none}
+        .sk-header{height:56px;background:#fff;border-bottom:1px solid #e8edf5;display:flex;align-items:center;justify-content:center;flex:none}
+        .sk-header-logo{width:100px;height:18px;border-radius:6px;background:linear-gradient(90deg,#3b82f6,#60a5fa);opacity:.85}
+        .sk-body{flex:1;display:flex;flex-direction:column;align-items:center;padding:20px 16px;gap:12px;overflow:hidden}
+        .sk-hero{width:100%;max-width:560px;height:120px;border-radius:18px;background:#fff;border:1px solid #e8edf5;padding:16px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden}
+        .sk-hero::after{content:"";position:absolute;width:100px;height:100px;border-radius:50%;right:-30px;top:-40px;background:rgba(59,130,246,.08)}
+        .sk-line{height:12px;border-radius:6px;background:#eef2f7}
+        .sk-line.w60{width:60%}.sk-line.w40{width:40%}.sk-line.w80{width:80%}.sk-line.w30{width:30%}
+        .sk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:560px}
+        .sk-stat{height:64px;border-radius:14px;background:#fff;border:1px solid #e8edf5;padding:10px;display:flex;flex-direction:column;gap:6px}
+        .sk-cards{display:flex;flex-direction:column;gap:8px;width:100%;max-width:560px}
+        .sk-card{height:72px;border-radius:14px;background:#fff;border:1px solid #e8edf5;padding:12px;display:flex;flex-direction:column;gap:8px}
+        .sk-nav{height:68px;background:#fff;border-top:1px solid #e8edf5;display:flex;align-items:center;justify-content:space-around;flex:none;padding:0 6px}
+        .sk-nav-item{width:40px;height:40px;border-radius:12px;background:#eef2f7}
+        /* 骨架脉冲动画 */
+        @keyframes sk-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+        .sk-line,.sk-stat,.sk-card,.sk-nav-item{animation:sk-pulse 1.4s ease-in-out infinite}
+        /* 暗色模式适配 */
+        @media(prefers-color-scheme:dark){
+            html,body,#app-skeleton{background:#0e1522}
+            .sk-header{background:#172033;border-color:#263247}
+            .sk-hero,.sk-stat,.sk-card{background:#172033;border-color:#263247}
+            .sk-line{background:#1e293b}
+            .sk-nav{background:#172033;border-color:#263247}
+            .sk-nav-item{background:#1e293b}
+        }
+        /* 隐藏main直到就绪 */
+        body:not(.app-ready) main{visibility:hidden}
+        body:not(.app-ready) .bottom-nav{visibility:hidden}
+        body:not(.app-ready) header{visibility:hidden}
+        /* FA图标立即回退emoji（不等待CDN） */
+        .fa-calendar-check::before{content:"📅"}
+        .fa-calendar-alt::before{content:"📆"}
+        .fa-chart-pie::before{content:"📊"}
+        .fa-trophy::before{content:"🏆"}
+        .fa-book-open::before{content:"📖"}
+        .fa-edit::before{content:"📝"}
+        .fa-cog::before{content:"⚙️"}
+        .fa-moon::before{content:"🌙"}
+        .fa-sun::before{content:"☀️"}
+        .fa-clock::before{content:"⏰"}
+        .fa-plus::before{content:"➕"}
+        .fa-times::before{content:"✖️"}
+        .fa-check::before{content:"✓"}
+        .fa-chevron-down::before{content:"▼"}
+        .fa-bolt::before{content:"⚡"}
+        .fa-gift::before{content:"🎁"}
+        .fa-dice::before{content:"🎲"}
+        .fa-save::before{content:"💾"}
+        .fa-copy::before{content:"📋"}
+        .fa-file-import::before{content:"📥"}
+        .fa-spell-check::before{content:"📝"}
+        .fa-brain::before{content:"🧠"}
+        .fa-calculator::before{content:"🧮"}
+        .fa-globe::before{content:"🌐"}
+        .fa-pen-fancy::before{content:"🖊️"}
+        .fa-chart-bar::before{content:"📊"}
+        .fa-book-reader::before{content:"📖"}
+        .fa-trash::before{content:"🗑️"}
+        .fa-rotate::before{content:"🔄"}
+        .fa-lightbulb::before{content:"💡"}
+        .fa-shield-alt::before{content:"🛡️"}
+        .fa-rocket::before{content:"🚀"}
+        .fa-flag-checkered::before{content:"🏁"}
+        .fa-feather::before{content:"🪶"}
+        .fa-chart-line::before{content:"📈"}
+        .fa-bell::before{content:"🔔"}
+        .fa-info-circle::before{content:"ℹ️"}
+        .fa-exclamation-circle::before{content:"⚠️"}
+        .fa-arrow-up::before{content:"⬆️"}
+        .fa-map-marker-alt::before{content:"📍"}
+        .fa-newspaper::before{content:"📰"}
+        .fa-fire::before{content:"🔥"}
+        .fa-star::before{content:"⭐"}
+        .fa-award::before{content:"🏅"}
+        .fa-medal::before{content:"🎖️"}
+        .fa-gem::before{content:"💎"}
+        .fa-heart::before{content:"❤️"}
+        .fa-thumbs-up::before{content:"👍"}
+        .fa-comment::before{content:"💬"}
+        .fa-running::before{content:"🏃"}
+        .fa-smile::before{content:"☺️"}
+        .fa-frown::before{content:"☹️"}
+        .fa-circle::before{content:"●"}
+        .fa-play::before{content:"▶️"}
+        .fa-pause::before{content:"⏸️"}
+        .fa-stop::before{content:"⏹️"}
+        .fa-sync::before{content:"🔄"}
+        .fa-redo::before{content:"↩️"}
+        .fa-flag::before{content:"🚩"}
+        .fa-bullseye::before{content:"🎯"}
+        .fa-clipboard-list::before{content:"📋"}
+        .fa-tasks::before{content:"📋"}
+        .fa-book::before{content:"📕"}
+        .fa-pencil-alt::before{content:"✏️"}
+        .fa-question-circle::before{content:"❓"}
+        .fa-check-circle::before{content:"✅"}
+        .fa-times-circle::before{content:"❌"}
+        .fa-exclamation-triangle::before{content:"⚠️"}
+    </style>
+
+    <script>
+        // 立即应用暗色模式（在Tailwind加载前就生效，避免闪烁）
+        (function(){
+            try {
+                var raw = localStorage.getItem('gongkao_app_v12');
+                if (raw) {
+                    var s = JSON.parse(raw);
+                    if (s.theme === 'dark') {
+                        document.documentElement.classList.add('dark');
+                        document.body.style.background = '#0e1522';
+                        document.body.style.color = '#e2e8f0';
+                    }
+                }
+            } catch(e) {}
+        })();
+    </script>
+
+    <script src="https://cdn.tailwindcss.com" onerror="window.__twFailed=true;document.body.classList.add('app-ready')"></script>
+    <script>
+        // 超时保护：如果Tailwind CDN 3秒未响应，强制进入app-ready状态
+        setTimeout(function() {
+            if (!window.tailwind && !document.body.classList.contains('app-ready')) {
+                console.warn('[TW] CDN timeout, continuing without Tailwind');
+                window.__twFailed = true;
+                document.body.classList.add('app-ready');
+            }
+        }, 3000);
     </script>
     <script>
+        // 默认就启用emoji回退（内联CSS已定义:before content）
+        // FA CSS加载成功后会自动覆盖emoji，无需额外检测
+        // 仅做防御性检测：若FA真的失败，确保fallback类存在
         (function() {
             function checkFA() {
                 var span = document.createElement('span');
@@ -21,14 +160,12 @@
                 if (w === 0) {
                     document.body.classList.add('fa-fallback');
                     console.log('[FA] CDN failed, using emoji fallback');
-                } else {
-                    console.log('[FA] Loaded successfully');
                 }
             }
             if (document.readyState === 'complete') {
-                setTimeout(checkFA, 500);
+                setTimeout(checkFA, 1500);
             } else {
-                window.addEventListener('load', function() { setTimeout(checkFA, 500); });
+                window.addEventListener('load', function() { setTimeout(checkFA, 1500); });
             }
         })();
     </script>
@@ -772,9 +909,86 @@
         .notification-toggle input[type="checkbox"]:checked::after { transform: translateX(18px); }
         .dark .notification-toggle input[type="checkbox"] { background: #4b5563; }
         .dark .notification-toggle input[type="checkbox"]:checked { background: #3b82f6; }
+    
+        /* ===== 复盘页面样式 ===== */
+        .review-hero { position: relative; overflow: hidden; border-radius: 20px; padding: 16px; background: linear-gradient(135deg, #f0fdf4, #eff6ff); border: 1px solid #bbf7d0; box-shadow: 0 4px 16px rgba(15,23,42,.04); }
+        .dark .review-hero { background: linear-gradient(135deg, #0a1f1a, #0f1e3d); border-color: #166534; }
+        .review-hero:after { content: ""; position: absolute; width: 120px; height: 120px; border-radius: 50%; right: -40px; top: -50px; background: rgba(34,197,94,.08); pointer-events: none; }
+        .review-module-card { background: var(--v18-card); border: 1px solid var(--v18-border); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+        .dark .review-module-card { background: #172033; border-color: #263247; }
+        .review-module-title { font-size: 13px; font-weight: 800; color: var(--v18-ink); display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+        .review-module-title .mod-icon { width: 24px; height: 24px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex: none; }
+        .review-field-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
+        .review-field-row:last-child { margin-bottom: 0; }
+        .review-field-label { font-size: 11px; font-weight: 700; color: var(--v18-muted); text-align: right; }
+        .review-input { width: 100%; min-height: 34px; padding: 7px 10px; border: 1px solid #dbe3ee; border-radius: 10px; background: #f8fafc; outline: none; font-size: 13px; transition: border-color .2s, box-shadow .2s; color: var(--v18-ink); }
+        .review-input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,.1); background: #fff; }
+        .dark .review-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+        .dark .review-input:focus { background: #111827; }
+        .review-input.num { max-width: 80px; text-align: center; }
+        .review-insight-box { background: var(--v18-card); border: 1px solid var(--v18-border); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+        .review-insight-box label { font-size: 12px; font-weight: 700; color: var(--v18-muted); display: block; margin-bottom: 6px; }
+        .review-insight-box textarea { width: 100%; min-height: 60px; padding: 8px 10px; border: 1px solid #dbe3ee; border-radius: 10px; background: #f8fafc; outline: none; font-size: 13px; resize: vertical; color: var(--v18-ink); }
+        .review-insight-box textarea:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,.1); background: #fff; }
+        .dark .review-insight-box textarea { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+        .review-btn-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .review-btn { padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; border: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: transform .15s, box-shadow .2s; }
+        .review-btn:active { transform: scale(.96); }
+        .review-btn-save { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; box-shadow: 0 4px 12px rgba(34,197,94,.25); }
+        .review-btn-copy { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,.25); }
+        .review-btn-import { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 4px 12px rgba(245,158,11,.25); }
+        .review-history-list { margin-top: 4px; }
+        .review-history-item { background: var(--v18-card); border: 1px solid var(--v18-border); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+        .dark .review-history-item { background: #172033; border-color: #263247; }
+        .review-history-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; user-select: none; }
+        .review-history-header:hover { background: rgba(0,0,0,.02); }
+        .dark .review-history-header:hover { background: rgba(255,255,255,.02); }
+        .review-history-date { font-size: 13px; font-weight: 800; color: var(--v18-ink); }
+        .review-history-meta { font-size: 11px; color: var(--v18-muted); display: flex; align-items: center; gap: 8px; }
+        .review-history-detail { display: none; padding: 0 14px 12px; border-top: 1px solid var(--v18-border); }
+        .review-history-detail.open { display: block; }
+        .review-history-detail .rh-mod { padding: 6px 0; border-bottom: 1px solid var(--v18-border); font-size: 11px; line-height: 1.6; }
+        .review-history-detail .rh-mod:last-child { border-bottom: 0; }
+        .review-history-detail .rh-mod-title { font-weight: 700; color: var(--v18-ink); margin-bottom: 2px; }
+        .review-history-detail .rh-mod-body { color: var(--v18-muted); padding-left: 8px; }
+        .review-empty { text-align: center; padding: 30px 14px; color: var(--v18-muted); font-size: 12px; }
+        .review-tab-bar { display: flex; gap: 4px; padding: 4px; background: #eef2f7; border-radius: 12px; margin-bottom: 12px; }
+        .dark .review-tab-bar { background: #111827; }
+        .review-tab-btn { flex: 1; border: 0; background: transparent; border-radius: 10px; padding: 8px 6px; font-size: 12px; font-weight: 700; color: #64748b; cursor: pointer; transition: all .2s; }
+        .review-tab-btn.active { background: #fff; color: #2563eb; box-shadow: 0 2px 8px rgba(15,23,42,.08); }
+        .dark .review-tab-btn.active { background: #263247; color: #93c5fd; }
+
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-darkbg dark:text-gray-100 h-screen flex flex-col overflow-hidden font-sans antialiased">
+    <!-- 启动骨架屏：Tailwind/JS就绪后由init()移除 -->
+    <div id="app-skeleton">
+        <div class="sk-header"><div class="sk-header-logo"></div></div>
+        <div class="sk-body">
+            <div class="sk-hero">
+                <div class="sk-line w40"></div>
+                <div class="sk-line w80"></div>
+                <div class="sk-line w60"></div>
+            </div>
+            <div class="sk-stats">
+                <div class="sk-stat"><div class="sk-line w60"></div><div class="sk-line w30"></div></div>
+                <div class="sk-stat"><div class="sk-line w60"></div><div class="sk-line w30"></div></div>
+                <div class="sk-stat"><div class="sk-line w60"></div><div class="sk-line w30"></div></div>
+            </div>
+            <div class="sk-cards">
+                <div class="sk-card"><div class="sk-line w80"></div><div class="sk-line w60"></div><div class="sk-line w40"></div></div>
+                <div class="sk-card"><div class="sk-line w80"></div><div class="sk-line w60"></div><div class="sk-line w40"></div></div>
+            </div>
+        </div>
+        <div class="sk-nav">
+            <div class="sk-nav-item"></div>
+            <div class="sk-nav-item"></div>
+            <div class="sk-nav-item"></div>
+            <div class="sk-nav-item"></div>
+            <div class="sk-nav-item"></div>
+            <div class="sk-nav-item"></div>
+        </div>
+    </div>
     <div id="toast-container" class="fixed top-0 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
 
     <div id="custom-confirm-overlay" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -822,6 +1036,9 @@
         <div id="view-cockpit" class="view-section px-4 pb-4 hidden"></div>
         <div id="view-growth" class="view-section px-4 pb-4 hidden"></div>
         <div id="view-materials" class="view-section px-4 pb-4 hidden"></div>
+
+<div id="view-review" class="view-section px-4 pb-4 hidden"></div>
+
     </main>
 
     <nav class="bottom-nav flex-none z-20">
@@ -831,6 +1048,7 @@
             <button class="nav-btn flex flex-col items-center justify-center text-gray-400" data-target="view-cockpit"><i class="fas fa-chart-pie"></i><span>驾驶舱</span></button>
             <button class="nav-btn flex flex-col items-center justify-center text-gray-400" data-target="view-growth"><i class="fas fa-trophy"></i><span>成长</span></button>
             <button class="nav-btn flex flex-col items-center justify-center text-gray-400" data-target="view-materials"><i class="fas fa-book-open"></i><span>资料</span></button>
+            <button class="nav-btn flex flex-col items-center justify-center text-gray-400" data-target="view-review"><i class="fas fa-edit"></i><span>复盘</span></button>
         </div>
     </nav>
 
@@ -957,6 +1175,40 @@
             </div>
         </div>
     </div>
+
+    
+<!-- 导入明日计划模态框 -->
+<div id="import-plan-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end justify-center p-0 modal-overlay sheet-modal">
+<div class="bg-white dark:bg-darkcard w-full max-w-md shadow-2xl modal-content">
+<div class="modal-header">
+<div class="sheet-handle"></div>
+<div class="flex justify-between items-start gap-3">
+<div>
+<div class="text-[10px] font-bold text-green-600 uppercase tracking-[0.18em]">Import</div>
+<h3 class="font-black text-xl text-slate-900 dark:text-white mt-1">📥 导入明日计划</h3>
+<p class="text-[11px] text-slate-400 mt-1">粘贴任务清单，每行一个任务<br>格式：<strong>标签：内容</strong>（无冒号则标签默认为"其他"）</p>
+</div>
+<button id="close-import-modal" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300"><i class="fas fa-times"></i></button>
+</div>
+</div>
+<div class="modal-body space-y-3">
+<div class="modal-section">
+<div class="modal-section-title"><span>📋 任务清单</span><span class="modal-mini-hint" id="import-target-date"></span></div>
+<textarea id="import-plan-text" rows="10" class="modal-textarea" placeholder="资料分析：完成资料分析限时1套（25分钟）&#10;言语理解-逻辑填空：刷题15题&#10;判断推理：图推专项10题&#10;申论：大作文提纲练习&#10;常识时政：半月谈15分钟"></textarea>
+<div class="mt-2 text-[10px] text-slate-400 leading-5">
+<i class="fas fa-info-circle"></i> 每行一个任务，格式为「标签：内容」。<br>
+没有冒号的行会被归到「其他」标签下。
+</div>
+</div>
+<div class="modal-footer">
+<div class="modal-footer-actions">
+<button id="import-plan-cancel" type="button" class="flex-1 secondary-btn">取消</button>
+<button id="import-plan-confirm" type="button" class="flex-1 primary-btn">确认导入</button>
+</div>
+</div>
+</div>
+</div>
+</div>
 
     <!-- 任务模态框 -->
     <div id="task-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end justify-center p-0 modal-overlay sheet-modal">
@@ -1220,6 +1472,7 @@
                         if (typeof state.notificationEnabled !== 'boolean') state.notificationEnabled = true;
                         if (!state.lastNotificationDate) state.lastNotificationDate = null;
                         if (!state.lastPenaltyCheckDate) state.lastPenaltyCheckDate = null;
+                if (!state.review) state.review = {};
                     } else {
                         initDefaultData();
                     }
@@ -2563,6 +2816,7 @@
                         else if (viewId === 'view-cockpit') renderCockpit();
                         else if (viewId === 'view-growth') renderGrowthView();
                         else if (viewId === 'view-materials') renderMaterialsView();
+                else if (viewId === 'view-review') renderReviewPage();
                     } catch (e) {
                         console.error('[VIEW] 渲染视图失败:', viewId, e);
                         showToast('视图加载失败，请刷新页面', 'error');
@@ -5324,25 +5578,33 @@
             }
 
             // ---------- 初始化（性能优化版） ----------
+            function removeSkeleton() {
+                var sk = document.getElementById('app-skeleton');
+                if (sk) {
+                    sk.classList.add('hidden');
+                    setTimeout(function(){ sk.parentNode && sk.parentNode.removeChild(sk); }, 400);
+                }
+                document.body.classList.add('app-ready');
+            }
+
             function init() {
                 document.addEventListener('click', (e) => { document.querySelectorAll(
                         '.quick-template-dropdown.open').forEach(el => { if (!el.contains(e.target)) el.classList
                             .remove('open'); }); });
 
+                // 同步加载关键数据 & 渲染，不等待CDN
                 loadState();
                 applyTheme();
-
                 checkRollover();
 
-                setTimeout(() => {
-                    checkDailyPenalty();
-                    setupAutoBackup();
-                    initNotification();
-                }, 300);
+                // 立即执行（不再延迟300ms）
+                try { checkDailyPenalty(); } catch(e) { console.warn('checkDailyPenalty failed', e); }
+                try { setupAutoBackup(); } catch(e) {}
+                try { initNotification(); } catch(e) {}
 
-                setupCountdownToggle();
-                bindConfirmButtons();
+                // 立即渲染首屏
                 renderToday();
+                document.body.classList.add('app-ready');
 
                 document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
                 const todayView = document.getElementById('view-today');
@@ -5357,6 +5619,14 @@
                     }
                 });
                 currentView = 'view-today';
+
+                // 延迟移除骨架屏（等一帧让渲染完成）
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(removeSkeleton);
+                });
+
+                setupCountdownToggle();
+                bindConfirmButtons();
 
                 document.querySelectorAll('.nav-btn').forEach(btn => {
                     btn.addEventListener('click', () => switchView(btn.dataset.target));
@@ -5517,6 +5787,315 @@
 
             window.addExam = addExam;
             window.renderExamList = renderExamList;
+
+            
+// ===== 复盘功能 =====
+const REVIEW_MODULES = [
+    { key: '资料分析', icon: 'fa-chart-bar', color: '#3b82f6' },
+    { key: '言语理解-逻辑填空', icon: 'fa-spell-check', color: '#8b5cf6' },
+    { key: '言语理解-片段阅读', icon: 'fa-book-reader', color: '#6366f1' },
+    { key: '判断推理', icon: 'fa-brain', color: '#ec4899' },
+    { key: '数量关系', icon: 'fa-calculator', color: '#f59e0b' },
+    { key: '常识时政', icon: 'fa-globe', color: '#10b981' },
+    { key: '申论', icon: 'fa-pen-fancy', color: '#ef4444' }
+];
+
+function getTaskCompletion(dateStr) {
+    const day = state.tasks[dateStr];
+    if (!day || !day.tasks || day.tasks.length === 0) return { done: 0, total: 0, pct: 0 };
+    const total = day.tasks.length;
+    const done = day.tasks.filter(t => t.done).length;
+    return { done, total, pct: Math.round(done / total * 100) };
+}
+
+function loadReviewData(dateStr) {
+    if (!state.review) state.review = {};
+    return state.review[dateStr] || null;
+}
+
+function saveReview(dateStr, data) {
+    if (!state.review) state.review = {};
+    state.review[dateStr] = data;
+    saveState();
+}
+
+function buildReviewSummaryText(dateStr, data) {
+    const lines = [];
+    lines.push('【' + dateStr + ' 复盘小结】');
+    lines.push('');
+    REVIEW_MODULES.forEach(mod => {
+        const m = (data.modules || {})[mod.key] || { wrong: 0, problem: '无', fix: '无' };
+        lines.push('【' + mod.key + '】');
+        lines.push('错题数：' + (m.wrong || 0));
+        lines.push('共性问题：' + (m.problem || '无'));
+        lines.push('明天改进：' + (m.fix || '无'));
+        lines.push('');
+    });
+    lines.push('【今日最大发现】');
+    lines.push((data.insight || '无'));
+    lines.push('');
+    lines.push('---');
+    lines.push('请帮我诊断并生成明日计划');
+    return lines.join('\n');
+}
+
+function copyReviewSummary() {
+    const today = getDateString(new Date());
+    const data = loadReviewData(today);
+    if (!data || !data.modules) {
+        showToast('请先填写并保存复盘再复制', 'error');
+        return;
+    }
+    const text = buildReviewSummaryText(today, data);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('✅ 复盘小结已复制到剪贴板', 'success');
+        }).catch(() => {
+            fallbackCopy(text);
+        });
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand('copy');
+        showToast('✅ 复盘小结已复制（兼容模式）', 'success');
+    } catch(e) {
+        showToast('复制失败，请手动复制', 'error');
+    }
+    document.body.removeChild(ta);
+}
+
+function renderReviewForm(dateStr, container) {
+    const data = loadReviewData(dateStr) || { modules: {}, insight: '' };
+    if (!data.modules) data.modules = {};
+    let html = '';
+    // Hero
+    const comp = getTaskCompletion(dateStr);
+    html += '<div class="review-hero mb-3">';
+    html += '<div class="flex items-center justify-between gap-3">';
+    html += '<div><div class="text-[10px] font-bold text-green-600 uppercase tracking-[0.18em]">Daily Review</div>';
+    html += '<div class="text-lg font-black text-slate-900 dark:text-white mt-1">' + dateStr + '</div></div>';
+    html += '<div style="text-align:right"><div style="font-size:18px;font-weight:950;color:#22c55e">✅ ' + comp.done + '/' + comp.total + '</div>';
+    html += '<div style="font-size:9px;color:var(--v18-muted)">今日完成度</div></div></div></div>';
+    // Modules
+    REVIEW_MODULES.forEach(mod => {
+        const m = data.modules[mod.key] || { wrong: 0, problem: '', fix: '' };
+        html += '<div class="review-module-card">';
+        html += '<div class="review-module-title"><span class="mod-icon" style="background:' + mod.color + '15;color:' + mod.color + '"><i class="fas ' + mod.icon + '"></i></span>' + mod.key + '</div>';
+        html += '<div class="review-field-row"><label class="review-field-label">错题数</label><input type="number" class="review-input num" id="rev-wrong-' + mod.key + '" value="' + (m.wrong||0) + '" min="0" placeholder="0"></div>';
+        html += '<div class="review-field-row"><label class="review-field-label">共性问题</label><input type="text" class="review-input" id="rev-problem-' + mod.key + '" value="' + escapeHtml(m.problem||'') + '" placeholder="一句话概括"></div>';
+        html += '<div class="review-field-row"><label class="review-field-label">明天改进</label><input type="text" class="review-input" id="rev-fix-' + mod.key + '" value="' + escapeHtml(m.fix||'') + '" placeholder="具体怎么做"></div>';
+        html += '</div>';
+    });
+    // Insight
+    html += '<div class="review-insight-box"><label>💡 今日最大发现</label><textarea id="rev-insight" placeholder="一句话或一段话总结今天最重要的收获或感悟...">' + escapeHtml(data.insight||'') + '</textarea></div>';
+    // Buttons
+    html += '<div class="review-btn-row">';
+    html += '<button class="review-btn review-btn-save" onclick="saveReviewForm()"><i class="fas fa-save"></i> 保存复盘</button>';
+    html += '<button class="review-btn review-btn-copy" onclick="copyReviewSummary()"><i class="fas fa-copy"></i> 复制小结</button>';
+    html += '<button class="review-btn review-btn-import" onclick="openImportPlanModal()"><i class="fas fa-file-import"></i> 导入计划</button>';
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function saveReviewForm() {
+    const today = getDateString(new Date());
+    const modules = {};
+    REVIEW_MODULES.forEach(mod => {
+        const wrong = parseInt(document.getElementById('rev-wrong-' + mod.key)?.value || '0') || 0;
+        const problem = document.getElementById('rev-problem-' + mod.key)?.value?.trim() || '';
+        const fix = document.getElementById('rev-fix-' + mod.key)?.value?.trim() || '';
+        modules[mod.key] = { wrong, problem, fix };
+    });
+    const insight = document.getElementById('rev-insight')?.value?.trim() || '';
+    saveReview(today, { modules, insight });
+    showToast('✅ 复盘已保存', 'success');
+    // Re-render history if visible
+    const histContainer = document.getElementById('review-history-container');
+    if (histContainer && !histContainer.closest('.hidden')) {
+        renderReviewHistory(histContainer);
+    }
+}
+
+function renderReviewHistory(container) {
+    if (!state.review) state.review = {};
+    const dates = Object.keys(state.review).sort().reverse().slice(0, 30);
+    if (dates.length === 0) {
+        container.innerHTML = '<div class="review-empty">还没有历史复盘记录<br>坚持每天复盘，进步看得见 💪</div>';
+        return;
+    }
+    let html = '';
+    dates.forEach(dateStr => {
+        const data = state.review[dateStr];
+        const comp = getTaskCompletion(dateStr);
+        const insight = (data.insight || '').slice(0, 20);
+        html += '<div class="review-history-item">';
+        html += '<div class="review-history-header" onclick="toggleReviewHistory(this)">';
+        html += '<span class="review-history-date">' + dateStr + '</span>';
+        html += '<span class="review-history-meta"><span style="color:#22c55e">✅ ' + comp.done + '/' + comp.total + '</span><i class="fas fa-chevron-down" style="font-size:10px;transition:transform .3s"></i></span>';
+        html += '</div>';
+        html += '<div class="review-history-detail">';
+        html += '<div style="font-size:11px;color:var(--v18-muted);margin:6px 0 4px;padding-left:8px;border-left:3px solid #22c55e"><strong style="color:var(--v18-ink)">今日最大发现：</strong>' + escapeHtml(data.insight||'无') + '</div>';
+        REVIEW_MODULES.forEach(mod => {
+            const m = (data.modules||{})[mod.key] || { wrong:0, problem:'无', fix:'无' };
+            html += '<div class="rh-mod"><div class="rh-mod-title" style="color:' + mod.color + '">● ' + mod.key + ' <span style="font-weight:400;color:var(--v18-muted);font-size:10px">错' + (m.wrong||0) + '题</span></div>';
+            html += '<div class="rh-mod-body">共性问题：' + escapeHtml(m.problem||'无') + '<br>明天改进：' + escapeHtml(m.fix||'无') + '</div></div>';
+        });
+        html += '</div></div>';
+    });
+    container.innerHTML = html;
+}
+
+function toggleReviewHistory(headerEl) {
+    const detail = headerEl.nextElementSibling;
+    const icon = headerEl.querySelector('.fa-chevron-down');
+    if (detail.classList.contains('open')) {
+        detail.classList.remove('open');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    } else {
+        detail.classList.add('open');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+    }
+}
+
+function openImportPlanModal() {
+    const tomorrow = addDays(getDateString(new Date()), 1);
+    const modal = document.getElementById('import-plan-modal');
+    const target = document.getElementById('import-target-date');
+    const textarea = document.getElementById('import-plan-text');
+    if (target) target.textContent = '目标日期：' + tomorrow;
+    if (textarea) textarea.value = '';
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeImportPlanModal() {
+    const modal = document.getElementById('import-plan-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function executeImportPlan() {
+    const text = document.getElementById('import-plan-text')?.value?.trim() || '';
+    if (!text) { showToast('请先粘贴任务清单', 'error'); return; }
+    const tomorrow = addDays(getDateString(new Date()), 1);
+    if (!state.tasks[tomorrow]) state.tasks[tomorrow] = { tip: '', tasks: [], note: '' };
+    if (!Array.isArray(state.tasks[tomorrow].tasks)) state.tasks[tomorrow].tasks = [];
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    let count = 0;
+    lines.forEach(line => {
+        let tag = '其他', content = line;
+        const colonIdx = line.indexOf('：');
+        const colonIdx2 = line.indexOf(':');
+        const idx = (colonIdx >= 0) ? colonIdx : colonIdx2;
+        if (idx > 0) {
+            tag = line.substring(0, idx).trim();
+            content = line.substring(idx + 1).trim();
+        }
+        if (!content) return;
+        const task = normalizeTask({
+            id: 't_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+            tag: tag,
+            content: content,
+            goal: '',
+            done: false,
+            priority: 'medium',
+            notebookId: null,
+            range: '',
+            correct: 0,
+            wrong: 0,
+            wrongReasonsCount: { K: 0, J: 0, S: 0 }
+        });
+        state.tasks[tomorrow].tasks.push(task);
+        count++;
+    });
+    if (count > 0) {
+        saveState();
+        showToast('✅ 已导入 ' + count + ' 个任务到 ' + tomorrow, 'success');
+        closeImportPlanModal();
+        // If tomorrow is today, refresh today view
+        const today = getDateString(new Date());
+        if (tomorrow === today && currentView === 'view-today') renderToday();
+        if (currentView === 'view-calendar') renderCalendar();
+    } else {
+        showToast('没有解析到有效任务', 'error');
+    }
+}
+
+function renderReviewPage() {
+    const container = document.getElementById('view-review');
+    if (!container) return;
+    const today = getDateString(new Date());
+    container.innerHTML = `
+<div class="review-hero mb-3">
+<div class="flex items-center justify-between gap-3">
+<div>
+<div class="text-[10px] font-bold text-green-600 uppercase tracking-[0.18em]">复盘中心</div>
+<div class="text-lg font-black text-slate-900 dark:text-white mt-1">📝 每日复盘</div>
+</div>
+<div style="text-align:right">
+<div style="font-size:11px;color:var(--v18-muted)" id="review-today-date">${today}</div>
+</div>
+</div>
+</div>
+<div class="review-tab-bar">
+<button class="review-tab-btn active" id="review-tab-today" onclick="switchReviewTab('today')">📅 今日复盘</button>
+<button class="review-tab-btn" id="review-tab-history" onclick="switchReviewTab('history')">📚 历史记录</button>
+</div>
+<div id="review-today-container"></div>
+<div id="review-history-container" class="hidden"></div>
+`;
+    renderReviewForm(today, document.getElementById('review-today-container'));
+    renderReviewHistory(document.getElementById('review-history-container'));
+}
+
+function switchReviewTab(tab) {
+    const tabToday = document.getElementById('review-tab-today');
+    const tabHistory = document.getElementById('review-tab-history');
+    const todayContainer = document.getElementById('review-today-container');
+    const historyContainer = document.getElementById('review-history-container');
+    if (tab === 'today') {
+        tabToday?.classList.add('active');
+        tabHistory?.classList.remove('active');
+        todayContainer?.classList.remove('hidden');
+        historyContainer?.classList.add('hidden');
+    } else {
+        tabToday?.classList.remove('active');
+        tabHistory?.classList.add('active');
+        todayContainer?.classList.add('hidden');
+        historyContainer?.classList.remove('hidden');
+        renderReviewHistory(historyContainer);
+    }
+}
+
+// Wire up import modal events
+document.getElementById('close-import-modal')?.addEventListener('click', closeImportPlanModal);
+document.getElementById('import-plan-cancel')?.addEventListener('click', closeImportPlanModal);
+document.getElementById('import-plan-confirm')?.addEventListener('click', executeImportPlan);
+
+// Expose to global
+window.saveReviewForm = saveReviewForm;
+window.copyReviewSummary = copyReviewSummary;
+window.openImportPlanModal = openImportPlanModal;
+window.closeImportPlanModal = closeImportPlanModal;
+window.executeImportPlan = executeImportPlan;
+window.renderReviewPage = renderReviewPage;
+window.renderReviewForm = renderReviewForm;
+window.renderReviewHistory = renderReviewHistory;
+window.toggleReviewHistory = toggleReviewHistory;
+window.switchReviewTab = switchReviewTab;
+window.buildReviewSummaryText = buildReviewSummaryText;
+window.loadReviewData = loadReviewData;
+window.saveReview = saveReview;
+window.getTaskCompletion = getTaskCompletion;
+// ===== /复盘功能 =====
 
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
